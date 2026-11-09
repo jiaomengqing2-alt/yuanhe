@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <defs>
+    <linearGradient id="shieldGrad" x1="10" y1="10" x2="110" y2="110" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1d4ed8"/>
+      <stop offset="52%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <linearGradient id="wingGrad" x1="20" y1="35" x2="100" y2="85" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e0f2fe"/>
+    </linearGradient>
+    <linearGradient id="goldAccent" x1="30" y1="20" x2="90" y2="100" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#fbbf24"/>
+    </linearGradient>
+    <filter id="glow" x="-15%" y="-15%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#0284c7" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- 外层荣耀六边形盾徽底座 -->
+  <path d="M60 6 L106 26 C109 27.5 111 31 110.5 34.5 C108 68 92 94 60 114 C28 94 12 68 9.5 34.5 C9 31 11 27.5 14 26 L60 6 Z"
+        fill="url(#shieldGrad)" filter="url(#glow)" stroke="#ffffff" stroke-width="2.5"/>
+
+  <!-- 内部金属金色荣誉内环 -->
+  <path d="M60 13 L99 30 C97 59 83 82 60 105 C37 82 23 59 21 30 L60 13 Z"
+        fill="none" stroke="url(#goldAccent)" stroke-width="2" stroke-opacity="0.85"/>
+
+  <!-- 飞翼流线车体轮廓 (象征速度与守护) -->
+  <path d="M24 52 C38 40 50 38 60 38 C70 38 82 40 96 52 C86 48 74 46 60 46 C46 46 34 48 24 52 Z"
+        fill="url(#goldAccent)"/>
+
+  <!-- 核心字母 Y 与 H 融合闪电公路图腾 (元赫 YuanHe) -->
+  <path d="M32 54 L49 71 L49 91 L57 91 L57 67 L42 54 Z" fill="url(#wingGrad)"/>
+  <path d="M88 54 L71 71 L71 91 L63 91 L63 67 L78 54 Z" fill="url(#wingGrad)"/>
+  <!-- 中央新能源极光闪电与H横梁 -->
+  <path d="M46 73 L74 73 L68 79 L44 79 Z" fill="url(#goldAccent)"/>
+  <circle cx="60" cy="28" r="4.5" fill="url(#goldAccent)"/>
+</svg>

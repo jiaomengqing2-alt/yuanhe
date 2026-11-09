@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>河北元赫汽车服务 - 微信小程序（独立端）</title>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        for (let reg of regs) { reg.unregister(); }
+      });
+    }
+  </script>
+  <script src="./libs/tailwind.js"></script>
+  <script src="./libs/vue.global.prod.js"></script>
+  <script src="./libs/lucide.min.js"></script>
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body class="bg-slate-100 text-slate-800 select-none md:select-auto">
+<div id="app" v-cloak class="app-viewport-shell">
+
+  <!-- 全局轻提示 Toast -->
+  <div v-if="toast.show" class="fixed top-20 left-1/2 z-[100] toast-anim px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 text-sm font-bold"
+       :class="toast.type === 'warn' ? 'bg-amber-500 text-white' : 'bg-white text-slate-900 border-2 border-emerald-500 shadow-emerald-500/20'">
+    <span>{{ toast.msg }}</span>
+  </div>
+
+  <!-- ==================== 1. 顶部固定导航栏：微信小程序独立端控制台 ==================== -->
+  <header class="app-fixed-header px-3 md:px-6 py-2 md:py-2.5">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 md:gap-3">
+      <div class="flex items-center gap-2.5 md:gap-3">
+        <img :src="state.company.logoUrl" alt="河北元赫Logo"
+             class="w-9 h-9 md:w-11 md:h-11 rounded-xl md:rounded-2xl object-contain bg-white p-0.5 shadow-md border border-emerald-200" />
+        <div>
+          <div class="font-black text-slate-900 text-sm md:text-base tracking-tight flex items-center gap-1.5">
+            <span>📱 河北元赫汽车服务 · 微信小程序</span>
+            <span class="bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-black px-2 py-0.5 rounded-full">独立运行端</span>
+          </div>
+          <div class="text-[10px] md:text-[11px] text-slate-500">网约车司机加盟 · 3D选车 · 特惠充电与免费定保预约 · 在租工作台（实时连通商家后台）</div>
+        </div>
+      </div>
+
+      <!-- 顶部快捷切换小程序 5 大页面 -->
+      <div class="hidden xl:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 gap-1 text-xs font-bold">
+        <button @click="mpTab = 'home'" class="px-3 py-1.5 rounded-lg transition"
+                :class="mpTab === 'home' ? 'bg-blue-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'">🏠 1. 首页</button>
+        <button @click="mpTab = 'cars'" class="px-3 py-1.5 rounded-lg transition"
+                :class="mpTab === 'cars' ? 'bg-blue-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'">🚗 2. 3D选车</button>
+        <button @click="mpTab = 'service'" class="px-3 py-1.5 rounded-lg transition"
+                :class="mpTab === 'service' ? 'bg-blue-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'">⚡ 3. 充电保养</button>
+        <button @click="mpTab = 'chat'" class="px-3 py-1.5 rounded-lg transition"
+                :class="mpTab === 'chat' ? 'bg-emerald-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'">💬 4. 在线客服</button>
+        <button @click="mpTab = 'mine'" class="px-3 py-1.5 rounded-lg transition"
+                :class="mpTab === 'mine' ? 'bg-blue-600 text-white shadow' : 'text-slate-600 hover:text-slate-900'">👤 5. 司机工作台</button>
+      </div>
+
+      <!-- 右侧：各独立端快速入口 -->
+      <div class="flex items-center gap-1.5 md:gap-2">
+        <a href="./index.html" target="_blank"
+           class="bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 px-2.5 md:px-3.5 py-1.5 md:py-2 rounded-xl text-[11px] md:text-xs font-bold transition">
+          🖥️ 消费者官网 &nearr;
+        </a>
+        <a href="./wechat_oa.html" target="_blank"
+           class="bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 px-2.5 md:px-3.5 py-1.5 md:py-2 rounded-xl text-[11px] md:text-xs font-bold transition">
+          💬 微信公众号 &nearr;
+        </a>
+        <a href="./merchant.html" target="_blank"
+           class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black px-2.5 md:px-3.5 py-1.5 md:py-2 rounded-xl text-[11px] md:text-xs shadow transition">
+          ⚙️ 商家后台 &nearr;
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== 2. 中间可滑动主内容区：微信小程序高保真交互系统 ==================== -->
+  <main class="app-scrollable-main py-6 px-4 pb-16">
+    <div class="max-w-7xl mx-auto page-view-anim">
+      <div class="grid lg:grid-cols-12 gap-8 items-start">
+
+        <!-- 左侧：微信小程序交互模拟器外壳 -->
+        <div class="lg:col-span-5 flex justify-center">
+          <div class="phone-mockup relative">
+            <div class="phone-notch"></div>
+
+            <!-- 微信小程序顶部原生胶囊导航栏 -->
+            <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-teal-600 text-white pt-8 pb-3 px-4 flex items-center justify-between shrink-0 shadow-sm">
+              <div class="flex items-center gap-2">
+                <img :src="state.company.logoUrl" class="w-7 h-7 rounded-lg bg-white p-0.5 object-contain" />
+                <div>
+                  <div class="text-xs font-black tracking-tight flex items-center gap-1">
+                    <span>河北元赫汽车服务</span>
+                    <span class="bg-emerald-400 text-slate-950 text-[8px] font-black px-1.5 py-0.2 rounded">官方小程序</span>
+                  </div>
+                  <div class="text-[9px] opacity-85">5800万注册资本 · 100%双证合规现车</div>
+                </div>
+              </div>
+              <div class="bg-black/25 border border-white/25 rounded-full px-2.5 py-0.5 text-[11px] flex items-center gap-1.5">
+                <span>•••</span><span class="opacity-40">|</span><span>◎</span>
+              </div>
+            </div>
+
+            <!-- 小程序内部身份快速切换条（网约车司机端 vs 个人/政企租售端） -->
+            <div class="bg-white border-b border-slate-200 px-3 py-1.5 flex items-center justify-between text-[10px] shrink-0">
+              <span class="text-slate-500 font-bold">当前视角：</span>
+              <div class="inline-flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 font-bold">
+                <button @click="mpMode = 'driver'" class="px-2.5 py-1 rounded-md transition"
+                        :class="mpMode === 'driver' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600'">
+                  👨‍✈️ 网约车司机端
+                </button>
+                <button @click="mpMode = 'personal'" class="px-2.5 py-1 rounded-md transition"
+                        :class="mpMode === 'personal' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600'">
+                  🚗 自驾/政企买车
+                </button>
+              </div>
+            </div>
+
+            <!-- 小程序中间可滚动内容区（5大核心Tab页面） -->
+            <div class="phone-scroll bg-slate-100 p-3 space-y-3 relative">
+
+              <!-- ==================== Tab 1：🏠 小程序首页 ==================== -->
+              <template v-if="mpTab === 'home'">
+                <!-- 顶部品牌主视觉海报卡 -->
+                <div class="rounded-2xl p-3.5 text-white shadow-md bg-gradient-to-br from-slate-900 via-blue-900 to-teal-800 relative overflow-hidden">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[9px] bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full font-black">石家庄持牌合规车企 · 91130102MA08WQXD6B</span>
+                  </div>
+                  <div class="text-sm font-black mt-1.5 leading-snug">
+                    {{ mpMode === 'driver' ? '比亚迪秦EV / 埃安 / 红旗 合规网约现车直提' : '个人自驾短租 · 政企公务长租 · 新能源团购直售' }}
+                  </div>
+                  <div class="text-[10px] text-sky-200 mt-1">
+                    {{ mpMode === 'driver' ? '纯租¥3200/月起 · 含100万三者险+50万/座座位险+免费保养' : '日租¥168/天起 · 5800万注册资本源头车队直供' }}
+                  </div>
+                  <div class="grid grid-cols-3 gap-1.5 mt-2.5 pt-2 border-t border-white/15 text-center text-[10px]">
+                    <div><div class="font-black text-amber-300">5800万</div><div class="text-[9px] opacity-80">注册资本</div></div>
+                    <div><div class="font-black text-emerald-300">10000km</div><div class="text-[9px] opacity-80">月度含里程</div></div>
+                    <div><div class="font-black text-sky-300">15工作日</div><div class="text-[9px] opacity-80">无息退押金</div></div>
+                  </div>
+                </div>
+
+                <!-- 金刚区 4 大核心功能入口 -->
+                <div class="grid grid-cols-4 gap-2 bg-white rounded-2xl p-3 shadow-sm border border-slate-200/80 text-center text-[10px] font-bold text-slate-700">
+                  <button @click="mpTab = 'cars'" class="flex flex-col items-center gap-1">
+                    <span class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-base shadow-sm">🚖</span>
+                    <span>3D选车库</span>
+                  </button>
+                  <button @click="mpTab = 'mine'" class="flex flex-col items-center gap-1">
+                    <span class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-base shadow-sm">📝</span>
+                    <span>司机报名</span>
+                  </button>
+                  <button @click="mpTab = 'service'" class="flex flex-col items-center gap-1">
+                    <span class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-base shadow-sm">⚡</span>
+                    <span>充电/保养</span>
+                  </button>
+                  <button @click="mpContractOpen = true" class="flex flex-col items-center gap-1">
+                    <span class="w-9 h-9 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center text-base shadow-sm">📜</span>
+                    <span>阳光合同</span>
+                  </button>
+                </div>
+
+                <!-- 热门主推现车专区（点击可打开小程序内四维看车弹层） -->
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between px-0.5">
+                    <span class="text-xs font-black text-slate-900">🔥 石家庄热租爆款现车</span>
+                    <button @click="mpTab = 'cars'" class="text-[10px] text-blue-600 font-bold">查看全部({{ state.vehicles.length }}) &rarr;</button>
+                  </div>
+
+                  <div v-for="car in sortedVehicles.slice(0, 3)" :key="car.id"
+                       class="bg-white rounded-2xl p-2.5 shadow-sm border border-slate-200/90 space-y-2">
+                    <div class="flex gap-2.5 items-center cursor-pointer" @click="openMpCarDetail(car)">
+                      <div class="relative w-24 h-16 rounded-xl overflow-hidden shrink-0 border border-slate-100">
+                        <img :src="car.images.front" class="w-full h-full object-cover" />
+                        <span v-if="car.isHot" class="absolute top-0.5 left-0.5 bg-amber-500 text-white text-[8px] font-black px-1.5 py-0.2 rounded">🔥爆款</span>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <div class="font-black text-xs text-slate-900 truncate">{{ car.name }}</div>
+                        <div class="text-[10px] text-slate-500 mt-0.5">续航{{ car.rangeKm }}km · {{ car.costPerKm }}</div>
+                        <div class="flex items-baseline gap-2 mt-1">
+                          <span class="text-xs font-black text-blue-600">纯租¥{{ car.rentMonthly }}<small class="text-[9px] font-normal">/月</small></span>
+                          <span class="text-[10px] font-bold text-emerald-600">代购¥{{ car.leaseMonthly }}/月</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-1.5 pt-1.5 border-t border-slate-100 text-[10px] font-bold">
+                      <button @click="openMpCarDetail(car)" class="py-1 rounded-lg bg-slate-100 text-slate-700">🔍 四维实拍</button>
+                      <button @click="mpJoinForm.targetCar = car.name; mpTab = 'mine'" class="py-1 rounded-lg bg-blue-600 text-white">📝 报名锁车</button>
+                      <button @click="mpTab = 'chat'; sendMpConsultMsg('你好，我在小程序首页看中了【' + car.name + '】，想了解底价和现车情况')" class="py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">💬 问司管</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 底部24小时救援与总部导航卡片 -->
+                <div class="bg-white rounded-2xl p-3 border border-slate-200 shadow-sm space-y-1.5 text-[10px]">
+                  <div class="font-black text-xs text-slate-900 flex items-center justify-between">
+                    <span>📍 元赫石家庄总部接待中心</span>
+                    <span class="text-emerald-600 font-bold">24h免费救援</span>
+                  </div>
+                  <div class="text-slate-600">{{ state.company.address }}</div>
+                  <div class="flex items-center justify-between pt-1">
+                    <span class="font-black text-blue-600">📞 {{ state.company.phone }}（杨经理）</span>
+                    <button @click="copyText(state.company.phone, '杨经理电话')" class="bg-blue-50 text-blue-700 font-bold px-2.5 py-1 rounded-lg">复制电话</button>
+                  </div>
+                </div>
+              </template>
+
+              <!-- ==================== Tab 2：🚗 选车展厅（含分类筛选 + 四维看车） ==================== -->
+              <template v-if="mpTab === 'cars'">
+                <div class="flex gap-1.5 overflow-x-auto pb-1 text-[10px] font-bold">
+                  <button @click="mpCarFilter = 'all'" class="px-2.5 py-1 rounded-full shrink-0" :class="mpCarFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-white text-slate-600 border border-slate-200'">全部({{ state.vehicles.length }})</button>
+                  <button @click="mpCarFilter = 'hot'" class="px-2.5 py-1 rounded-full shrink-0" :class="mpCarFilter === 'hot' ? 'bg-amber-500 text-white' : 'bg-white text-amber-700 border border-amber-200'">🔥热门爆款</button>
+                  <button @click="mpCarFilter = 'ride_hailing'" class="px-2.5 py-1 rounded-full shrink-0" :class="mpCarFilter === 'ride_hailing' ? 'bg-blue-600 text-white' : 'bg-white text-slate-600 border border-slate-200'">🚖合规网约车</button>
+                  <button @click="mpCarFilter = 'corporate'" class="px-2.5 py-1 rounded-full shrink-0" :class="mpCarFilter === 'corporate' ? 'bg-teal-600 text-white' : 'bg-white text-slate-600 border border-slate-200'">🏢商务7座</button>
+                </div>
+
+                <div v-for="car in mpFilteredCars" :key="car.id" class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 space-y-2">
+                  <div class="flex justify-between items-center text-[10px]">
+                    <span v-if="car.isHot" class="bg-amber-500 text-white font-black px-2 py-0.5 rounded-full">🔥 热门爆款</span>
+                    <span v-else class="bg-slate-800 text-white font-bold px-2 py-0.5 rounded-full">{{ car.badge }}</span>
+                    <span class="text-emerald-700 font-bold">{{ car.complianceTag }}</span>
+                  </div>
+
+                  <div @click="openMpCarDetail(car)" class="relative h-32 rounded-xl overflow-hidden border border-slate-100 cursor-pointer">
+                    <img :src="car.images[getCardAngle(car.id)]" class="w-full h-full object-cover" />
+                    <span class="absolute bottom-1.5 right-1.5 bg-black/70 text-white text-[9px] px-2 py-0.5 rounded-full">点击查看详情</span>
+                  </div>
+
+                  <!-- 小程序卡片内直接切换四维视角 -->
+                  <div class="grid grid-cols-4 gap-1 bg-slate-100 p-0.5 rounded-lg text-[9px] font-bold">
+                    <button @click="setCardAngle(car.id, 'front')" class="py-1 rounded" :class="getCardAngle(car.id) === 'front' ? 'bg-blue-600 text-white' : 'text-slate-600'">前45°</button>
+                    <button @click="setCardAngle(car.id, 'side')" class="py-1 rounded" :class="getCardAngle(car.id) === 'side' ? 'bg-blue-600 text-white' : 'text-slate-600'">正侧</button>
+                    <button @click="setCardAngle(car.id, 'rear')" class="py-1 rounded" :class="getCardAngle(car.id) === 'rear' ? 'bg-blue-600 text-white' : 'text-slate-600'">车尾</button>
+                    <button @click="setCardAngle(car.id, 'interior')" class="py-1 rounded" :class="getCardAngle(car.id) === 'interior' ? 'bg-blue-600 text-white' : 'text-slate-600'">内饰</button>
+                  </div>
+
+                  <div>
+                    <div class="font-black text-xs text-slate-900">{{ car.name }}</div>
+                    <div class="text-[10px] text-slate-500">{{ car.seats }} | 续航{{ car.rangeKm }}km | {{ car.costPerKm }}</div>
+                  </div>
+
+                  <div class="grid grid-cols-3 gap-1 bg-slate-50 p-2 rounded-xl text-center text-[10px] border border-slate-100">
+                    <div><div class="text-slate-400 text-[9px]">纯租月租</div><div class="font-black text-blue-600">¥{{ car.rentMonthly }}</div></div>
+                    <div class="border-x border-slate-200"><div class="text-slate-400 text-[9px]">以租代购</div><div class="font-black text-emerald-600">¥{{ car.leaseMonthly }}</div></div>
+                    <div><div class="text-slate-400 text-[9px]">自驾日租</div><div class="font-black text-slate-800">¥{{ car.dailyRent }}/天</div></div>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-1.5 text-[10px] font-bold">
+                    <button @click="mpJoinForm.targetCar = car.name; mpTab = 'mine'" class="py-1.5 rounded-xl bg-blue-600 text-white shadow-sm">立即预约试驾</button>
+                    <button @click="mpTab = 'chat'; sendMpConsultMsg('我想咨询【' + car.name + '】纯租及以租代购方案')" class="py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200">咨询在线司管</button>
+                  </div>
+                </div>
+              </template>
+
+              <!-- ==================== Tab 3：⚡ 充电与保养（特惠快充站 + 合同免费定保预约 + 24h救援） ==================== -->
+              <template v-if="mpTab === 'service'">
+                <div class="rounded-2xl p-3 bg-gradient-to-r from-rose-600 to-amber-500 text-white shadow space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs font-black">🆘 石家庄市区 24 小时免费救援</span>
+                    <span class="bg-white/20 text-[9px] px-2 py-0.5 rounded-full font-bold">合同第四条保障</span>
+                  </div>
+                  <div class="text-[10px] opacity-95">车辆故障/事故一键呼叫元赫车务救援：{{ state.company.phone }}</div>
+                  <button @click="copyText(state.company.phone, '24h救援热线')" class="mt-1 bg-white text-rose-600 font-black text-[10px] px-3 py-1 rounded-lg">📞 立即拨打/复制救援电话</button>
+                </div>
+
+                <!-- 合同附件1：在跑司机免费定期保养在线预约（直传商家后台） -->
+                <div class="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-sm space-y-2 text-xs">
+                  <div class="flex items-center justify-between">
+                    <span class="font-black text-slate-900">🔧 在租司机·免费定期保养预约</span>
+                    <span class="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">正常保养元赫全包</span>
+                  </div>
+                  <div class="p-2 rounded-xl bg-blue-50/70 border border-blue-100 text-[10px] text-slate-600 space-y-0.5">
+                    <div>• <strong>比亚迪秦EV</strong>：首保5000km或3个月，后续每20000km或1年</div>
+                    <div>• <strong>一汽红旗</strong>：首保20000km，后续每20000km免费保养</div>
+                    <div>• <strong>上汽荣威MAX</strong>：首保3000km，后续每10000km免费保养</div>
+                    <div class="text-emerald-700 font-bold">✓ 非司机原因维保无法用车，次日起免费提供替代车或免租！</div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2 text-[11px]">
+                    <input v-model="mpMaintForm.driverName" placeholder="司机姓名 *" class="border border-slate-300 rounded-xl px-2.5 py-1.5" />
+                    <input v-model="mpMaintForm.phone" placeholder="联系电话 *" class="border border-slate-300 rounded-xl px-2.5 py-1.5" />
+                  </div>
+                  <div class="grid grid-cols-2 gap-2 text-[11px]">
+                    <input v-model="mpMaintForm.plateNo" placeholder="车牌号 (如冀A·D88692)" class="border border-slate-300 rounded-xl px-2.5 py-1.5" />
+                    <input v-model="mpMaintForm.currentKm" placeholder="当前表显总里程(km)" class="border border-slate-300 rounded-xl px-2.5 py-1.5" />
+                  </div>
+                  <select v-model="mpMaintForm.carModel" class="w-full border border-slate-300 rounded-xl px-2.5 py-1.5 text-[11px] bg-white">
+                    <option>比亚迪秦EV（首保5000km / 常规每20000km）</option>
+                    <option>广汽埃安 AION S / Y（常规每15000-20000km）</option>
+                    <option>一汽红旗 E-QM5（每20000km定期保养）</option>
+                    <option>上汽荣威 MAX（首保3000km / 常规每10000km）</option>
+                  </select>
+                  <button @click="submitMpMaintenance" class="w-full bg-emerald-600 text-white font-black py-2 rounded-xl text-xs shadow">
+                    提交免费保养预约（实时传至商家后台）
+                  </button>
+                </div>
+
+                <!-- 元赫特惠快充补能站实时状态 -->
+                <div class="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-sm space-y-2">
+                  <div class="font-black text-xs text-slate-900">⚡ 石家庄元赫合作快充站（谷电¥0.45/度起）</div>
+                  <div v-for="st in state.chargingStations" :key="st.id" class="p-2.5 rounded-xl bg-emerald-50/50 border border-emerald-200/80 text-[10px] space-y-1">
+                    <div class="flex justify-between items-center">
+                      <span class="font-black text-slate-900">{{ st.name }}</span>
+                      <span class="bg-emerald-600 text-white px-1.5 py-0.5 rounded text-[9px] font-bold">空闲 {{ st.fastGunsFree }}/{{ st.fastGunsTotal }}枪</span>
+                    </div>
+                    <div class="text-slate-500">📍 {{ st.address }} | 谷电 ¥{{ st.valleyPrice }}/度</div>
+                    <div class="text-emerald-800 font-semibold">{{ st.driverPerks }}</div>
+                  </div>
+                </div>
+              </template>
+
+              <!-- ==================== Tab 4：💬 小程序在线客服（与商家网页端双向实时互通） ==================== -->
+              <template v-if="mpTab === 'chat'">
+                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 text-[10px] text-emerald-900">
+                  🟢 <strong>已实时连通商家网页管理后台</strong>：您在此发送的消息会标注【📱微信小程序】直接呈现在杨经理电脑后台，商家在网页端回复后将秒级显示在下方！
+                </div>
+
+                <div class="space-y-2.5 py-1">
+                  <div v-for="msg in state.chatMessages" :key="msg.id"
+                       class="flex flex-col" :class="msg.from === 'user' ? 'items-end' : 'items-start'">
+                    <div class="text-[9px] text-slate-400 mb-0.5 px-1">
+                      {{ msg.senderName || (msg.from === 'user' ? '我' : '元赫客服') }} · {{ msg.time }}
+                    </div>
+                    <div class="max-w-[86%] px-3 py-2 rounded-2xl text-xs leading-relaxed shadow-sm"
+                         :class="msg.from === 'user'
+                           ? 'bg-blue-600 text-white rounded-tr-sm'
+                           : msg.from === 'merchant'
+                           ? 'bg-emerald-600 text-white rounded-tl-sm font-bold'
+                           : 'bg-white text-slate-800 border border-slate-200 rounded-tl-sm'">
+                      {{ msg.text }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="sticky bottom-0 bg-slate-100 pt-2 space-y-1.5">
+                  <div class="flex gap-1 overflow-x-auto text-[10px]">
+                    <button @click="sendMpConsultMsg('你好，我在小程序看中了秦PLUS EV，今天能去高营大街试驾吗？')" class="px-2 py-1 rounded-full bg-blue-100 text-blue-700 font-bold shrink-0">🙋‍♂️ 预约今天试驾</button>
+                    <button @click="sendMpConsultMsg('请问100万三者险和15个工作日退押金都写进合同吗？')" class="px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 font-bold shrink-0">📜 询问合同与押金</button>
+                  </div>
+                  <div class="flex gap-1.5">
+                    <input v-model="mpChatInput" @keyup.enter="sendMpConsultMsg()"
+                           placeholder="在小程序发消息给商家网页后台..."
+                           class="flex-1 bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs outline-none" />
+                    <button @click="sendMpConsultMsg()" class="bg-emerald-600 text-white font-bold px-3.5 py-2 rounded-xl text-xs shrink-0">发送</button>
+                  </div>
+                </div>
+              </template>
+
+              <!-- ==================== Tab 5：👤 我的 / 司机报名与电子合同工作台 ==================== -->
+              <template v-if="mpTab === 'mine' || mpTab === 'join'">
+                <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-2 text-xs">
+                  <div class="flex items-center justify-between">
+                    <span class="font-black text-slate-900">📝 司机加盟 / 预约看车报名</span>
+                    <span class="text-[9px] bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded-full">直传商家后台</span>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2">
+                    <input v-model="mpJoinForm.name" placeholder="您的姓名 *" class="border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs" />
+                    <input v-model="mpJoinForm.phone" placeholder="11位手机号 *" class="border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs" />
+                  </div>
+                  <select v-model="mpJoinForm.targetCar" class="w-full border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs bg-white">
+                    <option v-for="v in sortedVehicles" :key="v.id" :value="v.name">{{ v.name }} (纯租¥{{ v.rentMonthly }}/月)</option>
+                  </select>
+                  <select v-model="mpJoinForm.mode" class="w-full border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs bg-white">
+                    <option>合规纯租（含100万三者险+保养）</option>
+                    <option>36期低首付以租代购（期满车归己）</option>
+                    <option>个人自驾短租 / 政企包车</option>
+                  </select>
+                  <button @click="submitMpJoin" class="w-full bg-gradient-to-r from-blue-600 to-teal-500 text-white font-black py-2 rounded-xl text-xs shadow">
+                    立即提交报名（实时同步至商家后台）
+                  </button>
+                </div>
+
+                <!-- 第二块：我的报名进度 & 商家网页后台实时回复通知 -->
+                <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-2 text-xs">
+                  <div class="font-black text-slate-900 flex items-center justify-between">
+                    <span>📬 报名审核进度 & 商家网页端回复</span>
+                    <span class="text-[9px] text-emerald-600 font-bold">双向实时同步</span>
+                  </div>
+                  <div v-for="ld in state.leads.slice(0, 3)" :key="ld.id" class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+                    <div class="flex justify-between items-center">
+                      <span class="font-bold text-slate-800">{{ ld.name }} ({{ ld.phone }})</span>
+                      <span class="text-[9px] px-2 py-0.5 rounded-full font-bold"
+                            :class="ld.merchantReply ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'">
+                        {{ ld.status }}
+                      </span>
+                    </div>
+                    <div class="text-[10px] text-slate-500">意向：{{ ld.targetCar }}</div>
+                    <div v-if="ld.merchantReply" class="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-[10px] text-emerald-900 font-semibold">
+                      💬 <strong>商家回复</strong>：{{ ld.merchantReply }}
+                    </div>
+                    <div v-else class="text-[10px] text-slate-400">⏳ 等待商家在网页后台点击【回复】...</div>
+                  </div>
+                </div>
+
+                <!-- 第三块：在租签约司机电子合同、月度10,000km里程监控与在线交租工作台 -->
+                <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-2.5 text-xs">
+                  <div class="flex items-center justify-between">
+                    <span class="font-black text-slate-900">🪪 在租司机工作台 (冀A·D88692)</span>
+                    <button @click="mpContractOpen = true" class="text-[10px] text-blue-600 font-bold underline">查阅电子合同</button>
+                  </div>
+
+                  <!-- 月度10,000公里额度进度条（对应真实合同第三条） -->
+                  <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5">
+                    <div class="flex justify-between text-[10px] font-bold">
+                      <span class="text-slate-600">📊 本月已跑里程（合同含10,000km/月）</span>
+                      <span :class="mpCurrentKm > 10000 ? 'text-rose-600' : 'text-emerald-600'">{{ mpCurrentKm }} / 10,000 km</span>
+                    </div>
+                    <input type="range" min="1000" max="12000" step="100" v-model.number="mpCurrentKm" class="w-full accent-blue-600 h-1.5" />
+                    <div class="text-[10px] text-slate-500">
+                      <span v-if="mpCurrentKm <= 10000">✅ 剩余免费里程额度 <strong>{{ 10000 - mpCurrentKm }} km</strong>（未超额，超额按0.3元/km计）</span>
+                      <span v-else class="text-rose-600 font-bold">⚠️ 已超出 {{ mpCurrentKm - 10000 }} km，预计超里程费：¥{{ ((mpCurrentKm - 10000) * 0.3).toFixed(0) }} 元（0.3元/km）</span>
+                    </div>
+                  </div>
+
+                  <!-- 本期租金账单与一键微信支付 -->
+                  <div class="p-2.5 rounded-xl bg-blue-50/60 border border-blue-200 flex items-center justify-between">
+                    <div>
+                      <div class="text-[10px] text-slate-500">本期月租（含100万三者险&定保）</div>
+                      <div class="text-sm font-black text-slate-900">¥ 3,200.00 <span class="text-[10px] text-emerald-600 font-bold">押金¥5000监管中</span></div>
+                    </div>
+                    <button @click="simulatePayRent"
+                            class="px-3 py-1.5 rounded-xl text-[10px] font-black shadow-sm"
+                            :class="mpRentPaid ? 'bg-emerald-100 text-emerald-800' : 'bg-emerald-600 text-white'">
+                      {{ mpRentPaid ? '✓ 本期已结清' : '💳 微信一键交租' }}
+                    </button>
+                  </div>
+                </div>
+              </template>
+
+              <!-- 小程序内嵌：车型3D四维看车弹层 -->
+              <div v-if="mpActiveCar" class="sticky inset-x-0 bottom-0 bg-white rounded-2xl p-3.5 shadow-2xl border-2 border-blue-500 space-y-2 z-30">
+                <div class="flex justify-between items-center">
+                  <span class="font-black text-xs text-slate-900">{{ mpActiveCar.name }}</span>
+                  <button @click="mpActiveCar = null" class="text-xs font-bold text-slate-400">✕ 关闭</button>
+                </div>
+                <img :src="mpActiveCar.images[mpActiveCarAngle]" class="w-full h-32 object-cover rounded-xl" />
+                <div class="grid grid-cols-4 gap-1 bg-slate-100 p-1 rounded-lg text-[9px] font-bold">
+                  <button @click="mpActiveCarAngle = 'front'" class="py-1 rounded" :class="mpActiveCarAngle === 'front' ? 'bg-blue-600 text-white' : ''">前45°</button>
+                  <button @click="mpActiveCarAngle = 'side'" class="py-1 rounded" :class="mpActiveCarAngle === 'side' ? 'bg-blue-600 text-white' : ''">正侧</button>
+                  <button @click="mpActiveCarAngle = 'rear'" class="py-1 rounded" :class="mpActiveCarAngle === 'rear' ? 'bg-blue-600 text-white' : ''">车尾</button>
+                  <button @click="mpActiveCarAngle = 'interior'" class="py-1 rounded" :class="mpActiveCarAngle === 'interior' ? 'bg-blue-600 text-white' : ''">内饰</button>
+                </div>
+                <div class="text-[10px] text-slate-600 space-y-0.5">
+                  <div>✓ 纯租 <strong class="text-blue-600">¥{{ mpActiveCar.rentMonthly }}/月</strong> | 以租代购 <strong class="text-emerald-600">¥{{ mpActiveCar.leaseMonthly }}/月</strong></div>
+                  <div>✓ 含100万三者险+50万/座座位险+正常保养年审全包</div>
+                </div>
+                <button @click="mpJoinForm.targetCar = mpActiveCar.name; mpActiveCar = null; mpTab = 'mine'"
+                        class="w-full bg-blue-600 text-white font-black py-2 rounded-xl text-xs">
+                  立即预约试驾此车
+                </button>
+              </div>
+
+              <!-- 小程序内嵌：《车辆租赁协议》速查弹层 -->
+              <div v-if="mpContractOpen" class="sticky inset-x-0 bottom-0 bg-white rounded-2xl p-3.5 shadow-2xl border-2 border-emerald-500 space-y-2 z-30 text-[10px]">
+                <div class="flex justify-between items-center">
+                  <span class="font-black text-xs text-slate-900">📜《元赫车辆租赁协议》核心条款</span>
+                  <button @click="mpContractOpen = false" class="text-xs font-bold text-slate-400">✕ 关闭</button>
+                </div>
+                <div class="space-y-1 text-slate-600">
+                  <div>1. <strong>保险全包</strong>：甲方投保交强险、车损险、不计免赔、100万三者险、50万/座座位险。</div>
+                  <div>2. <strong>保养年审</strong>：正常保养、保险与年审由元赫承担。</div>
+                  <div>3. <strong>替代车兜底</strong>：非司机原因维保无法用车，次日起免费提供同等级替代车或免租。</div>
+                  <div>4. <strong>里程与退押</strong>：月限10,000km（超0.3元/km）；期满无违章15个工作日内一次性无息退押金。</div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- 小程序底部原生 5 栏 TabBar -->
+            <div class="bg-white border-t border-slate-200 grid grid-cols-5 h-13 py-1 text-[10px] font-bold shrink-0">
+              <button @click="mpTab = 'home'" class="flex flex-col items-center justify-center gap-0.5"
+                      :class="mpTab === 'home' ? 'text-blue-600 font-black' : 'text-slate-400'">
+                <span class="text-sm">🏠</span><span>首页</span>
+              </button>
+              <button @click="mpTab = 'cars'" class="flex flex-col items-center justify-center gap-0.5"
+                      :class="mpTab === 'cars' ? 'text-blue-600 font-black' : 'text-slate-400'">
+                <span class="text-sm">🚗</span><span>选车</span>
+              </button>
+              <button @click="mpTab = 'service'" class="flex flex-col items-center justify-center gap-0.5"
+                      :class="mpTab === 'service' ? 'text-blue-600 font-black' : 'text-slate-400'">
+                <span class="text-sm">⚡</span><span>充电保养</span>
+              </button>
+              <button @click="mpTab = 'chat'" class="flex flex-col items-center justify-center gap-0.5 relative"
+                      :class="mpTab === 'chat' ? 'text-emerald-600 font-black' : 'text-slate-400'">
+                <span class="text-sm">💬</span><span>客服</span>
+                <span class="w-2 h-2 rounded-full bg-rose-500 absolute top-1 right-4"></span>
+              </button>
+              <button @click="mpTab = 'mine'" class="flex flex-col items-center justify-center gap-0.5"
+                      :class="mpTab === 'mine' || mpTab === 'join' ? 'text-blue-600 font-black' : 'text-slate-400'">
+                <span class="text-sm">👤</span><span>我的</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧：微信小程序功能架构导览 & 跨端联动控制台 -->
+        <div class="lg:col-span-7 space-y-5">
+          <div class="soft-section-card rounded-3xl p-6 md:p-8 space-y-4">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="bg-emerald-600 text-white text-xs font-black px-3 py-1 rounded-full">微信小程序独立端 · 河北元赫汽车服务</span>
+              <span class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full">已与商家管理后台【📱小程序管理】实时打通</span>
+            </div>
+            <h2 class="text-2xl font-black text-slate-900">📱【河北元赫汽车服务】微信小程序 · 五大核心模块架构</h2>
+            <p class="text-xs md:text-sm text-slate-600 leading-relaxed">
+              小程序已与消费者官网完全分离，作为独立掌上服务端运行。点击下方按钮或直接操作左侧手机屏幕即可切换体验各个小程序页面：
+            </p>
+
+            <!-- 快速切换小程序5大页面按钮 -->
+            <div class="grid sm:grid-cols-5 gap-2.5 pt-1">
+              <button @click="mpTab = 'home'" class="p-3 rounded-2xl border text-left transition"
+                      :class="mpTab === 'home' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:border-blue-400'">
+                <div class="text-base">🏠</div>
+                <div class="font-black text-xs mt-1">1. 小程序首页</div>
+                <div class="text-[10px] opacity-80">双身份切换+金刚区</div>
+              </button>
+              <button @click="mpTab = 'cars'" class="p-3 rounded-2xl border text-left transition"
+                      :class="mpTab === 'cars' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:border-blue-400'">
+                <div class="text-base">🚗</div>
+                <div class="font-black text-xs mt-1">2. 3D选车展厅</div>
+                <div class="text-[10px] opacity-80">四维实拍+透明报价</div>
+              </button>
+              <button @click="mpTab = 'service'" class="p-3 rounded-2xl border text-left transition"
+                      :class="mpTab === 'service' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:border-blue-400'">
+                <div class="text-base">⚡</div>
+                <div class="font-black text-xs mt-1">3. 充电与保养</div>
+                <div class="text-[10px] opacity-80">免费定保预约+救援</div>
+              </button>
+              <button @click="mpTab = 'chat'" class="p-3 rounded-2xl border text-left transition"
+                      :class="mpTab === 'chat' ? 'bg-emerald-600 text-white border-emerald-600 shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:border-emerald-400'">
+                <div class="text-base">💬</div>
+                <div class="font-black text-xs mt-1">4. 小程序客服</div>
+                <div class="text-[10px] opacity-80">直通商家网页端坐席</div>
+              </button>
+              <button @click="mpTab = 'mine'" class="p-3 rounded-2xl border text-left transition"
+                      :class="mpTab === 'mine' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:border-blue-400'">
+                <div class="text-base">👤</div>
+                <div class="font-black text-xs mt-1">5. 司机工作台</div>
+                <div class="text-[10px] opacity-80">报名回执+1万km监控</div>
+              </button>
+            </div>
+
+            <!-- 小程序与商家网页后台联动说明卡片 -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 space-y-3 text-xs">
+              <div class="font-black text-sm text-slate-900">🔗 独立小程序 $\leftrightarrow$ 商家管理后台 4 大实时数据闭环：</div>
+              <div class="grid sm:grid-cols-2 gap-3 text-slate-600">
+                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/70">
+                  <strong class="text-slate-900 block mb-0.5">① 车型与充电站参数独立同步</strong>
+                  商家在后台修改车型租金、设定🔥热门爆款或配置特惠充电站谷电电价，小程序端自动实时更新。
+                </div>
+                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/70">
+                  <strong class="text-slate-900 block mb-0.5">② 司机报名与免费定保预约直传</strong>
+                  司机在小程序提交【加盟报名】或【免费定期保养预约】，商家后台线索池秒级收到并标注【来源：微信小程序】。
+                </div>
+                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/70">
+                  <strong class="text-slate-900 block mb-0.5">③ 商家网页端直接回复小程序</strong>
+                  杨经理在网页后台点击【发送回复至小程序】，司机的【我的-报名审核进度】和【客服消息】立即弹出回执。
+                </div>
+                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/70">
+                  <strong class="text-slate-900 block mb-0.5">④ 真实合同条款深度内嵌</strong>
+                  小程序内置10,000km/月里程进度条、100万三者险电子合同查阅及石家庄市区24h免费救援一键呼叫。
+                </div>
+              </div>
+              <div class="pt-1 flex flex-wrap gap-3">
+                <a href="./merchant.html?tab=mp_mgr" target="_blank" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black px-4 py-2 rounded-xl text-xs shadow transition">
+                  ⚙️ 打开【商家后台 · 小程序管理】 &nearr;
+                </a>
+                <a href="./wechat_oa.html" target="_blank" class="bg-teal-600 hover:bg-teal-700 text-white font-black px-4 py-2 rounded-xl text-xs shadow transition">
+                  💬 打开【微信公众号独立端】 &nearr;
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ==================== 3. 底部固定栏 ==================== -->
+  <footer class="app-fixed-footer px-4 md:px-6 py-2.5 bg-white text-[11px] md:text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
+      <span>📱 河北元赫汽车服务有限公司 · 微信小程序独立端（{{ state.company.address }} | 24h热线：{{ state.company.phone }}）</span>
+      <div class="flex items-center gap-3 font-bold">
+        <a href="./index.html" target="_blank" class="text-blue-600 hover:underline">🖥️ 消费者官网</a>
+        <a href="./wechat_oa.html" target="_blank" class="text-teal-600 hover:underline">💬 微信公众号</a>
+        <a href="./merchant.html" target="_blank" class="text-amber-700 hover:underline">⚙️ 商家管理后台</a>
+      </div>
+    </div>
+  </footer>
+
+</div>
+<script src="./js/data.js"></script>
+<script src="./js/app.js"></script>
+</body>
+</html>

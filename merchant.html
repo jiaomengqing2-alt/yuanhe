@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>河北元赫汽车服务有限公司 - 多端分立运营管理后台（商家端）</title>
+  <script src="./libs/tailwind.js"></script>
+  <script src="./libs/vue.global.prod.js"></script>
+  <script src="./libs/lucide.min.js"></script>
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body class="bg-slate-100 text-slate-800">
+<div id="app" v-cloak class="app-viewport-shell">
+
+  <!-- 全局轻提示 Toast -->
+  <div v-if="toast.show" class="fixed top-20 left-1/2 z-[100] toast-anim px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 text-sm font-bold bg-slate-900 text-emerald-400 border border-emerald-500/40">
+    <span>{{ toast.msg }}</span>
+  </div>
+
+  <!-- ==================== 1. 顶部固定不动：商家分端管理后台导航栏（兼容手机与电脑） ==================== -->
+  <header class="app-fixed-header px-3 md:px-6 py-2 md:py-3 bg-slate-900 text-white border-b border-slate-800">
+    <div class="max-w-[1480px] mx-auto flex flex-wrap items-center justify-between gap-2 md:gap-3">
+      <div class="flex items-center gap-2.5 md:gap-3">
+        <img :src="state.company.logoUrl" alt="Logo" class="w-9 h-9 md:w-11 md:h-11 rounded-xl md:rounded-2xl bg-white p-0.5 object-contain" />
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-black text-sm md:text-lg text-white">河北元赫汽车 · 全渠道分立管理后台</span>
+            <span class="hidden sm:inline-block bg-amber-500 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-full">官网 / 小程序 / 公众号 分开管理</span>
+          </div>
+          <div class="hidden md:block text-[11px] text-slate-400">独立管理【消费者官网】【微信小程序】【微信公众号】及全系车型库、客户线索与消息坐席</div>
+        </div>
+      </div>
+
+      <!-- 右上角：分别打开三个独立客户端页面 -->
+      <div class="flex items-center gap-1.5 md:gap-2">
+        <a href="./index.html" target="_blank"
+           class="bg-blue-600 hover:bg-blue-500 text-white font-black px-2.5 md:px-3.5 py-1.5 md:py-2 rounded-xl text-[11px] md:text-xs shadow transition">
+          🖥️ 看官网 &nearr;
+        </a>
+        <a href="./miniprogram.html" target="_blank"
+           class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-2.5 md:px-3.5 py-1.5 md:py-2 rounded-xl text-[11px] md:text-xs shadow transition">
+          📱 看小程序 &nearr;
+        </a>
+        <a href="./wechat_oa.html" target="_blank"
+           class="bg-teal-500 hover:bg-teal-400 text-slate-950 font-black px-2.5 md:px-3.5 py-1.5 md:py-2 rounded-xl text-[11px] md:text-xs shadow transition">
+          💬 看公众号 &nearr;
+        </a>
+        <button @click="resetDefaultData" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-2.5 py-1.5 md:py-2 rounded-xl text-[11px] md:text-xs font-bold">
+          🔄 重置
+        </button>
+      </div>
+
+      <!-- 商家后台五大独立管理模块切换（车型库 / 官网管理 / 小程序管理 / 公众号管理 / 线索与坐席） -->
+      <div class="w-full xl:w-auto grid grid-cols-5 xl:flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700 gap-1 text-[10px] md:text-xs font-bold">
+        <button @click="merchantTab = 'fleet_mgr'" class="px-2 md:px-3 py-2 rounded-lg transition text-center truncate"
+                :class="merchantTab === 'fleet_mgr' ? 'bg-blue-600 text-white shadow' : 'text-slate-300 hover:text-white'">
+          🚗 <span class="hidden sm:inline">1. </span>车型库管理
+        </button>
+        <button @click="merchantTab = 'brand_mgr'" class="px-2 md:px-3 py-2 rounded-lg transition text-center truncate"
+                :class="merchantTab === 'brand_mgr' ? 'bg-sky-600 text-white shadow' : 'text-slate-300 hover:text-white'">
+          🖥️ <span class="hidden sm:inline">2. </span>官网管理
+        </button>
+        <button @click="merchantTab = 'mp_mgr'" class="px-2 md:px-3 py-2 rounded-lg transition text-center truncate"
+                :class="merchantTab === 'mp_mgr' ? 'bg-emerald-600 text-white shadow' : 'text-slate-300 hover:text-white'">
+          📱 <span class="hidden sm:inline">3. </span>小程序管理
+        </button>
+        <button @click="merchantTab = 'oa_mgr'" class="px-2 md:px-3 py-2 rounded-lg transition text-center truncate"
+                :class="merchantTab === 'oa_mgr' ? 'bg-teal-500 text-slate-950 shadow' : 'text-slate-300 hover:text-white'">
+          💬 <span class="hidden sm:inline">4. </span>公众号管理
+        </button>
+        <button @click="merchantTab = 'leads_mgr'" class="px-2 md:px-3 py-2 rounded-lg transition text-center truncate"
+                :class="merchantTab === 'leads_mgr' ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-300 hover:text-white'">
+          📋 <span class="hidden sm:inline">5. </span>线索坐席({{ state.leads.length }})
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== 2. 中间可滑动操作区 ==================== -->
+  <main class="app-scrollable-main py-5 md:py-8 px-3 md:px-6 pb-16">
+    <div class="max-w-7xl mx-auto space-y-8">
+
+      <!-- =============================================================== -->
+      <!-- 模块 1：🚗 车型管理 + 热门款设定 + 商家手动上传四维车辆图片 -->
+      <!-- =============================================================== -->
+      <div v-if="merchantTab === 'fleet_mgr'" class="space-y-8 page-view-anim">
+
+        <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
+            <div>
+              <h2 class="text-xl font-black text-slate-900">🚗 在库车型编辑 · 设定【🔥热门爆款】 · 手动上传同一情境四维车图</h2>
+              <p class="text-xs text-slate-500 mt-1">您可以直接修改任意车型的租金价格、勾选是否为热门爆款，或点击图片下方的【上传替换】上传新图，消费者官网与微信小程序选车库将自动同步更新。</p>
+            </div>
+            <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-xl">✓ 修改后自动同步至官网与小程序</span>
+          </div>
+
+          <div class="space-y-6">
+            <div v-for="(car, idx) in state.vehicles" :key="car.id"
+                 class="p-6 rounded-3xl border-2 transition space-y-5"
+                 :class="car.isHot ? 'bg-amber-50/40 border-amber-400' : 'bg-slate-50/70 border-slate-200'">
+
+              <!-- 第一行：车型标题、热门款开关、删除按钮 -->
+              <div class="flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-3 flex-1 min-w-[260px]">
+                  <span class="w-8 h-8 rounded-xl bg-slate-900 text-white font-black text-xs flex items-center justify-center shrink-0">#{{ idx + 1 }}</span>
+                  <input v-model="car.name" class="font-black text-base text-slate-900 bg-white border border-slate-300 rounded-xl px-3.5 py-2 flex-1" placeholder="车型名称" />
+                </div>
+
+                <div class="flex items-center gap-3">
+                  <button @click="toggleHotCar(car)"
+                          class="px-4 py-2 rounded-xl font-black text-xs transition shadow-sm"
+                          :class="car.isHot ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white' : 'bg-white text-slate-700 border border-slate-300 hover:border-amber-400'">
+                    {{ car.isHot ? '🔥 已设为热门爆款（点击可取消）' : '☆ 设为热门爆款（置顶高亮）' }}
+                  </button>
+                  <button @click="removeVehicle(idx)" class="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs">
+                    🗑️ 删除车型
+                  </button>
+                </div>
+              </div>
+
+              <!-- 第二行：价格与核心租车参数编辑 -->
+              <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
+                <div>
+                  <label class="font-bold text-slate-500 block mb-1">合规纯租(元/月)</label>
+                  <input type="number" v-model.number="car.rentMonthly" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 font-black text-blue-600" />
+                </div>
+                <div>
+                  <label class="font-bold text-slate-500 block mb-1">以租代购月供(元)</label>
+                  <input type="number" v-model.number="car.leaseMonthly" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 font-black text-emerald-600" />
+                </div>
+                <div>
+                  <label class="font-bold text-slate-500 block mb-1">以租代购首付(元)</label>
+                  <input type="number" v-model.number="car.leaseDownPayment" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 font-bold text-slate-800" />
+                </div>
+                <div>
+                  <label class="font-bold text-slate-500 block mb-1">个人/商务日租(元)</label>
+                  <input type="number" v-model.number="car.dailyRent" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 font-bold text-slate-800" />
+                </div>
+                <div>
+                  <label class="font-bold text-slate-500 block mb-1">CLTC续航(km)</label>
+                  <input type="number" v-model.number="car.rangeKm" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 font-bold text-slate-800" />
+                </div>
+                <div>
+                  <label class="font-bold text-slate-500 block mb-1">车色与情境标注</label>
+                  <input v-model="car.unifiedColorName" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-700" placeholder="如：雪域白·影棚展车" />
+                </div>
+              </div>
+
+              <!-- 第三行：📸 商家手动上传/替换同一颜色、同一情境的 4 张视角图片 -->
+              <div class="bg-white rounded-2xl p-4 border border-slate-200/90">
+                <div class="text-xs font-black text-slate-800 mb-3 flex items-center justify-between">
+                  <span>📸 车型全方位 4 视角图管理（建议上传同一颜色、同一场景下的前45°、正侧、车尾、内饰图）</span>
+                  <span class="text-[11px] text-slate-400 font-normal">上传后自动裁剪为 960×600 高清画幅</span>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div class="border border-slate-200 rounded-xl p-2.5 text-center space-y-2">
+                    <div class="text-[11px] font-bold text-slate-600">① 前45°立体外观</div>
+                    <img :src="car.images.front" class="h-28 w-full object-cover rounded-lg bg-slate-100" />
+                    <label class="block w-full bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs py-1.5 rounded-lg cursor-pointer transition">
+                      📤 上传替换前视图
+                      <input type="file" accept="image/*" class="hidden" @change="uploadCarImage(car, 'front', $event)" />
+                    </label>
+                  </div>
+                  <div class="border border-slate-200 rounded-xl p-2.5 text-center space-y-2">
+                    <div class="text-[11px] font-bold text-slate-600">② 车身正侧流线</div>
+                    <img :src="car.images.side" class="h-28 w-full object-cover rounded-lg bg-slate-100" />
+                    <label class="block w-full bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs py-1.5 rounded-lg cursor-pointer transition">
+                      📤 上传替换侧视图
+                      <input type="file" accept="image/*" class="hidden" @change="uploadCarImage(car, 'side', $event)" />
+                    </label>
+                  </div>
+                  <div class="border border-slate-200 rounded-xl p-2.5 text-center space-y-2">
+                    <div class="text-[11px] font-bold text-slate-600">③ 车尾尾灯视角</div>
+                    <img :src="car.images.rear" class="h-28 w-full object-cover rounded-lg bg-slate-100" />
+                    <label class="block w-full bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs py-1.5 rounded-lg cursor-pointer transition">
+                      📤 上传替换尾视图
+                      <input type="file" accept="image/*" class="hidden" @change="uploadCarImage(car, 'rear', $event)" />
+                    </label>
+                  </div>
+                  <div class="border border-slate-200 rounded-xl p-2.5 text-center space-y-2">
+                    <div class="text-[11px] font-bold text-slate-600">④ 智能座舱与后排</div>
+                    <img :src="car.images.interior" class="h-28 w-full object-cover rounded-lg bg-slate-100" />
+                    <label class="block w-full bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs py-1.5 rounded-lg cursor-pointer transition">
+                      📤 上传替换内饰图
+                      <input type="file" accept="image/*" class="hidden" @change="uploadCarImage(car, 'interior', $event)" />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- 新增上架车型面板 -->
+        <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-4">
+          <h3 class="text-lg font-black text-slate-900">➕ 新增上架车型（支持上传自定义四维图片）</h3>
+          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+            <div>
+              <label class="font-bold text-slate-600">车型全称 *</label>
+              <input v-model="newCarForm.name" placeholder="例如：比亚迪 海豚 420km 自由版" class="w-full mt-1 border border-slate-300 rounded-xl px-3 py-2" />
+            </div>
+            <div>
+              <label class="font-bold text-slate-600">所属分类</label>
+              <select v-model="newCarForm.category" class="w-full mt-1 border border-slate-300 rounded-xl px-3 py-2 bg-white">
+                <option value="ride_hailing">🚖 网约车合规王牌</option>
+                <option value="nev_sale">⚡ 新能源租售/混动</option>
+                <option value="corporate">🏢 政企商务7座</option>
+              </select>
+            </div>
+            <div>
+              <label class="font-bold text-slate-600">是否设为热门款</label>
+              <select v-model="newCarForm.isHot" class="w-full mt-1 border border-slate-300 rounded-xl px-3 py-2 bg-white font-bold text-amber-600">
+                <option :value="true">🔥 是（设为热门爆款置顶）</option>
+                <option :value="false">否（普通展示）</option>
+              </select>
+            </div>
+            <div>
+              <label class="font-bold text-slate-600">合规纯租月租(元)</label>
+              <input type="number" v-model.number="newCarForm.rentMonthly" class="w-full mt-1 border border-slate-300 rounded-xl px-3 py-2 font-bold text-blue-600" />
+            </div>
+          </div>
+          <button @click="addNewVehicle" class="bg-blue-600 hover:bg-blue-700 text-white font-black px-6 py-3 rounded-xl text-xs shadow">
+            确认发布新车型至消费者官网与微信小程序
+          </button>
+        </div>
+
+      </div>
+
+      <!-- =============================================================== -->
+      <!-- 模块 2：🖥️ 官方网站独立管理（品牌首页文案、Logo上传 & 电话微信配置） -->
+      <!-- =============================================================== -->
+      <div v-if="merchantTab === 'brand_mgr'" class="space-y-6 page-view-anim">
+        <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-5">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div>
+              <span class="bg-sky-100 text-sky-800 text-xs font-black px-3 py-1 rounded-full">独立渠道 1 · 消费者官方网站</span>
+              <h2 class="text-xl font-black text-slate-900 mt-1.5">🖥️ 官方网站（index.html）品牌首页文案、定制 Logo 与联系方式管理</h2>
+            </div>
+            <a href="./index.html" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white font-black text-xs px-4 py-2.5 rounded-xl shadow">
+              🖥️ 打开消费者官方网站预览 &nearr;
+            </a>
+          </div>
+
+          <!-- Logo 预览与上传 -->
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+              <img :src="state.company.logoUrl" class="w-16 h-16 rounded-2xl bg-white p-1 border border-slate-200 object-contain shadow-sm" />
+              <div>
+                <div class="font-black text-sm text-slate-900">当前企业品牌 Logo 徽标</div>
+                <div class="text-xs text-slate-500">已为您默认配置元赫专属定制蓝绿极光飞翼盾徽 Logo，您也可以随时上传自定义图片替换</div>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <label class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer shadow-sm">
+                📤 上传自定义 Logo 图片
+                <input type="file" accept="image/*" class="hidden" @change="uploadCompanyLogo($event)" />
+              </label>
+              <button @click="state.company.logoUrl = './assets/logo_yuanhe.svg'; showToast('已恢复默认元赫定制盾徽Logo')"
+                      class="bg-white border border-slate-300 text-slate-700 font-bold text-xs px-3.5 py-2.5 rounded-xl">
+                恢复默认定制Logo
+              </button>
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <label class="font-bold text-slate-700">官网品牌首页主标题 (Slogan)</label>
+              <input v-model="state.company.slogan" class="w-full mt-1 border border-slate-300 rounded-xl px-3.5 py-2.5 font-bold" />
+            </div>
+            <div>
+              <label class="font-bold text-slate-700">官网品牌首页副标题背书</label>
+              <input v-model="state.company.subSlogan" class="w-full mt-1 border border-slate-300 rounded-xl px-3.5 py-2.5" />
+            </div>
+          </div>
+
+          <div class="text-xs">
+            <label class="font-bold text-slate-700">官网品牌首页：公司实力宏大介绍文案</label>
+            <textarea v-model="state.company.companyIntroGrand" rows="4" class="w-full mt-1 border border-slate-300 rounded-xl p-3.5 leading-relaxed"></textarea>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <label class="font-bold text-slate-700">销售与招商合作意愿主标题</label>
+              <input v-model="state.company.salesIntentTitle" class="w-full mt-1 border border-slate-300 rounded-xl px-3.5 py-2.5 font-bold text-blue-700" />
+            </div>
+            <div>
+              <label class="font-bold text-slate-700">销售与合作诚意副标题说明</label>
+              <input v-model="state.company.salesIntentSubtitle" class="w-full mt-1 border border-slate-300 rounded-xl px-3.5 py-2.5" />
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-3 gap-4 text-xs pt-2 border-t border-slate-100">
+            <div>
+              <label class="font-bold text-slate-700">📞 对外咨询电话（同步悬浮客服与底部栏）</label>
+              <input v-model="state.company.phone" class="w-full mt-1 border border-slate-300 rounded-xl px-3.5 py-2.5 font-black text-blue-600" />
+            </div>
+            <div>
+              <label class="font-bold text-slate-700">🟢 专属客服微信号</label>
+              <input v-model="state.company.wechatId" class="w-full mt-1 border border-slate-300 rounded-xl px-3.5 py-2.5 font-black text-emerald-600" />
+            </div>
+            <div>
+              <label class="font-bold text-slate-700">📍 总部/展厅地址</label>
+              <input v-model="state.company.address" class="w-full mt-1 border border-slate-300 rounded-xl px-3.5 py-2.5" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =============================================================== -->
+      <!-- 模块 3：📱 微信小程序独立管理（miniprogram.html 专属配置） -->
+      <!-- =============================================================== -->
+      <div v-if="merchantTab === 'mp_mgr'" class="space-y-6 page-view-anim">
+        <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-6">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div>
+              <span class="bg-emerald-100 text-emerald-800 text-xs font-black px-3 py-1 rounded-full">独立渠道 2 · 微信小程序端</span>
+              <h2 class="text-xl font-black text-slate-900 mt-1.5">📱 微信小程序（miniprogram.html）特惠充电站与司机工作台管理</h2>
+              <p class="text-xs text-slate-500 mt-1">在此专门管理微信小程序内的石家庄合作快充站电价、空闲快充枪数与司机专属福利，修改后实时同步至独立小程序端。</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <a href="./miniprogram.html" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs px-4 py-2.5 rounded-xl shadow">
+                📱 打开独立【微信小程序】页面 &nearr;
+              </a>
+            </div>
+          </div>
+
+          <!-- 合作特惠快充站配置 -->
+          <div class="space-y-3">
+            <h3 class="text-base font-black text-slate-900">⚡ 小程序【充电与保养】Tab · 合作快充站参数配置</h3>
+            <div class="grid md:grid-cols-3 gap-4 text-xs">
+              <div v-for="st in state.chargingStations" :key="st.id" class="p-4 rounded-2xl bg-emerald-50/40 border border-emerald-200 space-y-2.5">
+                <div>
+                  <label class="font-bold text-slate-600">充电站名称</label>
+                  <input v-model="st.name" class="w-full mt-1 bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-black text-slate-900" />
+                </div>
+                <div>
+                  <label class="font-bold text-slate-600">详细地址</label>
+                  <input v-model="st.address" class="w-full mt-1 bg-white border border-slate-300 rounded-xl px-3 py-1.5" />
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="font-bold text-slate-600">谷电价格(元/度)</label>
+                    <input v-model="st.valleyPrice" class="w-full mt-1 bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-black text-emerald-700" />
+                  </div>
+                  <div>
+                    <label class="font-bold text-slate-600">当前空闲快充枪</label>
+                    <input type="number" v-model.number="st.fastGunsFree" class="w-full mt-1 bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-bold" />
+                  </div>
+                </div>
+                <div>
+                  <label class="font-bold text-slate-600">元赫司机专属权益说明</label>
+                  <input v-model="st.driverPerks" class="w-full mt-1 bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-emerald-800" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 小程序最新报名与保养预约快览 -->
+          <div class="pt-4 border-t border-slate-100 space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-base font-black text-slate-900">📬 来自【微信小程序】的最新司机报名与免费保养预约 ({{ mpLeadsList.length }}条)</h3>
+              <button @click="leadChannelFilter = 'mp'; merchantTab = 'leads_mgr'" class="text-xs font-black text-emerald-700 hover:underline">
+                前往线索坐席集中处理 &rarr;
+              </button>
+            </div>
+            <div v-if="mpLeadsList.length === 0" class="text-xs text-slate-400 py-4 text-center bg-slate-50 rounded-2xl">
+              暂无来自微信小程序的线索，可在独立小程序页面提交测试
+            </div>
+            <div v-else class="grid md:grid-cols-2 gap-3 text-xs">
+              <div v-for="ld in mpLeadsList.slice(0, 4)" :key="ld.id" class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <span class="font-black text-slate-900">{{ ld.name }} ({{ ld.phone }})</span>
+                  <span class="bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{{ ld.source }}</span>
+                </div>
+                <div class="text-slate-600">{{ ld.type }} · 意向：<strong>{{ ld.targetCar }}</strong></div>
+                <div class="flex gap-2 pt-1">
+                  <input v-model="ld.replyDraft" placeholder="直接回复该小程序客户..." class="flex-1 bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs" />
+                  <button @click="replyToLead(ld)" class="bg-emerald-600 text-white font-bold px-3 py-1 rounded-lg">回复至小程序</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =============================================================== -->
+      <!-- 模块 4：💬 微信公众号独立管理（wechat_oa.html 专属配置） -->
+      <!-- =============================================================== -->
+      <div v-if="merchantTab === 'oa_mgr'" class="space-y-6 page-view-anim">
+        <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-5">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div>
+              <span class="bg-teal-100 text-teal-800 text-xs font-black px-3 py-1 rounded-full">独立渠道 3 · 微信公众号（官方服务号）</span>
+              <h2 class="text-xl font-black text-slate-900 mt-1.5">💬 微信公众号（wechat_oa.html）多图文推文矩阵与服务号配置</h2>
+              <p class="text-xs text-slate-500 mt-1">在此专门管理【{{ state.company.wechatService }}】服务号名称及 3 篇多图文推文的标题、摘要、封面与正文，修改后独立公众号端实时更新。</p>
+            </div>
+            <a href="./wechat_oa.html" target="_blank" class="bg-teal-600 hover:bg-teal-700 text-white font-black text-xs px-4 py-2.5 rounded-xl shadow">
+              💬 打开独立【微信公众号】页面 &nearr;
+            </a>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <label class="font-bold text-slate-700">微信认证服务号名称</label>
+              <input v-model="state.company.wechatService" class="w-full mt-1 border border-slate-300 rounded-xl px-3.5 py-2 font-black text-teal-800" />
+            </div>
+            <div>
+              <label class="font-bold text-slate-700">公众号内嵌客服电话</label>
+              <input v-model="state.company.phone" class="w-full mt-1 border border-slate-300 rounded-xl px-3.5 py-2 font-bold text-blue-600" />
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div v-for="(art, idx) in state.articles" :key="art.id" class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 text-xs">
+              <div class="flex items-center justify-between">
+                <span class="font-black text-sm text-teal-800">{{ idx === 0 ? '🔥 公众号头条大图推文' : '📰 次条推文 #' + idx }}</span>
+                <input v-model="art.tag" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1 font-bold text-slate-700 w-36" placeholder="栏目分类标签" />
+              </div>
+              <div>
+                <label class="font-bold text-slate-600">推文标题</label>
+                <input v-model="art.title" class="w-full mt-1 bg-white border border-slate-300 rounded-xl px-3.5 py-2 font-black text-slate-900" />
+              </div>
+              <div>
+                <label class="font-bold text-slate-600">推文摘要</label>
+                <input v-model="art.summary" class="w-full mt-1 bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-slate-700" />
+              </div>
+              <div>
+                <label class="font-bold text-slate-600">推文正文（支持HTML排版）</label>
+                <textarea v-model="art.content" rows="3" class="w-full mt-1 bg-white border border-slate-300 rounded-xl p-3 text-slate-700 leading-relaxed"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =============================================================== -->
+      <!-- 模块 5：📋 客户预约意愿线索池 + 💬 分渠道在线咨询人工坐席工作台 -->
+      <!-- =============================================================== -->
+      <div v-if="merchantTab === 'leads_mgr'" class="space-y-8 page-view-anim">
+
+        <!-- 顶部分渠道筛选器（可分别查看 官网 / 小程序 / 公众号 的线索与消息） -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2 text-xs font-black text-slate-800">
+            <span>🔍 按独立渠道筛选客户线索与咨询消息：</span>
+          </div>
+          <div class="flex flex-wrap gap-2 text-xs font-bold">
+            <button @click="leadChannelFilter = 'all'" class="px-3.5 py-1.5 rounded-xl transition"
+                    :class="leadChannelFilter === 'all' ? 'bg-slate-900 text-white shadow' : 'bg-slate-100 text-slate-600'">
+              全部渠道 ({{ state.leads.length }})
+            </button>
+            <button @click="leadChannelFilter = 'web'" class="px-3.5 py-1.5 rounded-xl transition"
+                    :class="leadChannelFilter === 'web' ? 'bg-blue-600 text-white shadow' : 'bg-blue-50 text-blue-700'">
+              🖥️ 仅看消费者官网 ({{ webLeadsList.length }})
+            </button>
+            <button @click="leadChannelFilter = 'mp'" class="px-3.5 py-1.5 rounded-xl transition"
+                    :class="leadChannelFilter === 'mp' ? 'bg-emerald-600 text-white shadow' : 'bg-emerald-50 text-emerald-700'">
+              📱 仅看微信小程序 ({{ mpLeadsList.length }})
+            </button>
+            <button @click="leadChannelFilter = 'oa'" class="px-3.5 py-1.5 rounded-xl transition"
+                    :class="leadChannelFilter === 'oa' ? 'bg-teal-600 text-white shadow' : 'bg-teal-50 text-teal-700'">
+              💬 仅看微信公众号
+            </button>
+          </div>
+        </div>
+
+        <!-- 第一部分：📋 消费者预约看车与租售车意愿线索池 -->
+        <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-5">
+          <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="bg-amber-500 text-slate-950 text-xs font-black px-3 py-1 rounded-full">分渠道实时接收表单</span>
+                <h2 class="text-xl font-black text-slate-900">📋 客户预约看车、司机加盟与维保预约线索池 ({{ filteredMerchantLeads.length }}条)</h2>
+              </div>
+              <p class="text-xs text-slate-500 mt-1">
+                清晰区分来自<strong>【🖥️ 消费者官网】</strong>与<strong>【📱 微信小程序】</strong>的客户提交资料，支持在下方一键分别回复。
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button @click="exportLeadsCsv"
+                      class="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs px-4 py-2.5 rounded-xl shadow transition">
+                📥 一键导出 Excel (CSV) 客户名单
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div v-for="(ld, i) in filteredMerchantLeads" :key="ld.id"
+                 class="p-4 rounded-2xl border transition flex flex-col gap-3 text-xs"
+                 :class="ld.status === '新提交·待联系' ? 'bg-amber-50/60 border-amber-300 shadow-sm' : 'bg-slate-50/70 border-slate-200'">
+              <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                <div class="space-y-1.5 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span v-if="ld.status === '新提交·待联系'" class="bg-rose-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full animate-pulse">NEW 新客户</span>
+                    <span class="font-black text-sm text-slate-900">{{ ld.name }}</span>
+                    <span class="font-black text-sm text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-lg border border-blue-200">{{ ld.phone }}</span>
+                    <button @click="copyText(ld.phone, '客户手机号')" class="text-[11px] text-blue-600 hover:underline font-bold">复制号码</button>
+                    <span class="bg-blue-100 text-blue-800 font-bold px-2.5 py-0.5 rounded-full">{{ ld.type }}</span>
+                    <span class="font-bold px-2.5 py-0.5 rounded-full"
+                          :class="ld.source && ld.source.includes('小程序') ? 'bg-emerald-600 text-white' : 'bg-sky-100 text-sky-800'">
+                      来源：{{ ld.source }}
+                    </span>
+                    <span class="text-slate-400">🕒 {{ ld.time }}</span>
+                  </div>
+                  <div class="text-slate-700 flex flex-wrap items-center gap-2 pt-0.5">
+                    <span>🚗 意向车型：<strong class="text-slate-900">{{ ld.targetCar }}</strong></span>
+                    <span class="text-slate-300">|</span>
+                    <span class="flex-1 min-w-[240px]">📝 客户意愿/商家备注：
+                      <input v-model="ld.note" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs text-slate-800 w-72 sm:w-96 ml-1" placeholder="可随时在此补充司管跟进情况..." />
+                    </span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <select v-model="ld.status" class="bg-white border border-slate-300 rounded-xl px-3 py-2 font-bold text-amber-700">
+                    <option>新提交·待联系</option>
+                    <option>待司管联系</option>
+                    <option>已邀约到店</option>
+                    <option>已签约提车</option>
+                  </select>
+                  <button @click="state.leads.splice(state.leads.indexOf(ld), 1)" class="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold">删除</button>
+                </div>
+              </div>
+
+              <!-- 商家网页端直接回复该客户 -->
+              <div class="pt-2.5 border-t border-slate-200/80 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <span class="font-black text-emerald-700 shrink-0">💬 网页端直接回复该客户：</span>
+                <input v-model="ld.replyDraft" @keyup.enter="replyToLead(ld)"
+                       placeholder="输入给该客户的回复（如：审核已通过，请明天下午2点到高营大街30号总部试驾提车）..."
+                       class="flex-1 bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs outline-none focus:border-emerald-500" />
+                <button @click="replyToLead(ld)"
+                        class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs shrink-0 shadow-sm">
+                  📤 发送回复至对应端
+                </button>
+                <button @click="replyToLead(ld, '【河北元赫汽车】' + ld.name + '您好！您的预约申请已受理通过，请携带驾驶证前往石家庄长安区高营大街30号御景半岛花园2号楼1824看车试驾，杨经理电话：17503114319')"
+                        class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold px-3 py-1.5 rounded-xl text-xs shrink-0">
+                  ⚡ 一键发送“审核通过&到店邀约”
+                </button>
+              </div>
+              <div v-if="ld.merchantReply" class="text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-1.5 font-semibold">
+                ✅ {{ ld.merchantReply }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 第二部分：💬 全渠道在线咨询统一人工坐席工作台 -->
+        <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-5">
+          <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="bg-emerald-600 text-white text-xs font-black px-3 py-1 rounded-full">官网 + 微信小程序 + 公众号 消息互通</span>
+                <h2 class="text-xl font-black text-slate-900">💬 全渠道在线咨询人工坐席工作台 ({{ filteredChatMessages.length }}条消息)</h2>
+              </div>
+              <p class="text-xs text-slate-500 mt-1">
+                每条消息均带有渠道标签（<strong>🖥️消费者官网 / 📱微信小程序 / 💬微信公众号</strong>），您在此处直接打字回复，客户端将同步实时收到！
+              </p>
+            </div>
+            <button @click="clearChatHistory" class="text-xs font-bold text-slate-500 hover:text-rose-600 bg-slate-100 px-3.5 py-2 rounded-xl">
+              🗑️ 清空重置对话记录
+            </button>
+          </div>
+
+          <!-- 实时聊天记录流 -->
+          <div class="bg-slate-50 rounded-2xl border border-slate-200 p-5 h-72 overflow-y-auto space-y-3 text-xs">
+            <div v-for="msg in filteredChatMessages" :key="msg.id"
+                 class="flex flex-col"
+                 :class="msg.from === 'user' ? 'items-start' : 'items-end'">
+              <div class="text-[11px] font-bold mb-1 px-1 flex items-center gap-1.5"
+                   :class="msg.from === 'user' ? 'text-blue-600' : msg.from === 'merchant' ? 'text-emerald-700' : 'text-slate-400'">
+                <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px]">{{ msg.channel || '消费者官网' }}</span>
+                <span>{{ msg.senderName || (msg.from === 'user' ? '🧑 咨询客户' : msg.from === 'merchant' ? '👨‍💼 我（元赫人工客服·杨经理）' : '🤖 系统智能应答') }} · {{ msg.time }}</span>
+              </div>
+              <div class="max-w-[80%] px-4 py-2.5 rounded-2xl leading-relaxed shadow-sm"
+                   :class="msg.from === 'user'
+                     ? 'bg-blue-600 text-white rounded-tl-sm font-bold'
+                     : msg.from === 'merchant'
+                     ? 'bg-emerald-600 text-white rounded-tr-sm font-semibold'
+                     : 'bg-white text-slate-700 border border-slate-200 rounded-tr-sm'">
+                {{ msg.text }}
+              </div>
+            </div>
+          </div>
+
+          <!-- 商家快捷话术 + 人工回复输入框 -->
+          <div class="space-y-3">
+            <div class="flex flex-wrap items-center gap-2 text-xs">
+              <span class="font-bold text-slate-500">⚡ 一键发送常用人工话术：</span>
+              <button @click="sendMerchantReply('师傅您好！我是元赫汽车杨经理（电话17503114319），目前长安区高营大街30号总部比亚迪秦PLUS EV、埃安、红旗现车充足，您留个电话我发定位给您！')"
+                      class="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold transition">
+                👋 发送杨经理名片与总部看车邀请
+              </button>
+              <button @click="sendMerchantReply('我们的合规网约车全部含交强险、车损险、100万三者险、50万/座座位险及正常保养年审，月限1万公里，无任何隐形杂费！')"
+                      class="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 font-bold transition">
+                🛡️ 发送100万三者险与全包合同说明
+              </button>
+            </div>
+
+            <div class="flex gap-3">
+              <input v-model="merchantReplyInput" @keyup.enter="sendMerchantReply()"
+                     placeholder="在此输入人工回复内容，按回车或点击右侧按钮即可实时发送至官网与小程序聊天窗..."
+                     class="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs font-medium outline-none focus:border-emerald-500" />
+              <button @click="sendMerchantReply()"
+                      class="bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 text-white font-black px-6 py-3 rounded-xl text-xs shadow-md shrink-0">
+                📤 发送人工回复
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ==================== 3. 底部固定栏 ==================== -->
+  <footer class="app-fixed-footer px-6 py-2.5 bg-white text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
+      <span>🔧 河北元赫汽车服务有限公司 · 多端分立运营管理后台 v3.2</span>
+      <div class="flex items-center gap-4 font-black">
+        <a href="./index.html" target="_blank" class="text-blue-600 hover:underline">🖥️ 消费者官网 &nearr;</a>
+        <a href="./miniprogram.html" target="_blank" class="text-emerald-600 hover:underline">📱 微信小程序独立端 &nearr;</a>
+        <a href="./wechat_oa.html" target="_blank" class="text-teal-600 hover:underline">💬 微信公众号独立端 &nearr;</a>
+      </div>
+    </div>
+  </footer>
+
+</div>
+<script src="./js/data.js"></script>
+<script src="./js/app.js"></script>
+</body>
+</html>

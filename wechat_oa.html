@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>河北元赫汽车服务 - 微信公众号·服务号（独立端）</title>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        for (let reg of regs) { reg.unregister(); }
+      });
+    }
+  </script>
+  <script src="./libs/tailwind.js"></script>
+  <script src="./libs/vue.global.prod.js"></script>
+  <script src="./libs/lucide.min.js"></script>
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body class="bg-slate-100 text-slate-800 select-none md:select-auto">
+<div id="app" v-cloak class="app-viewport-shell">
+
+  <!-- 全局轻提示 Toast -->
+  <div v-if="toast.show" class="fixed top-20 left-1/2 z-[100] toast-anim px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 text-sm font-bold"
+       :class="toast.type === 'warn' ? 'bg-amber-500 text-white' : 'bg-white text-slate-900 border-2 border-emerald-500 shadow-emerald-500/20'">
+    <span>{{ toast.msg }}</span>
+  </div>
+
+  <!-- ==================== 1. 顶部固定导航栏：微信公众号独立端控制台 ==================== -->
+  <header class="app-fixed-header px-3 md:px-6 py-2 md:py-2.5">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 md:gap-3">
+      <div class="flex items-center gap-2.5 md:gap-3">
+        <img :src="state.company.logoUrl" alt="河北元赫Logo"
+             class="w-9 h-9 md:w-11 md:h-11 rounded-xl md:rounded-2xl object-contain bg-white p-0.5 shadow-md border border-teal-200" />
+        <div>
+          <div class="font-black text-slate-900 text-sm md:text-base tracking-tight flex items-center gap-1.5">
+            <span>💬 河北元赫汽车服务 · 微信公众号（官方服务号）</span>
+            <span class="bg-teal-100 text-teal-800 border border-teal-300 text-[10px] font-black px-2 py-0.5 rounded-full">独立运行端</span>
+          </div>
+          <div class="text-[10px] md:text-[11px] text-slate-500">多图文推文矩阵 · 3栏自定义菜单 · 服务通知模板消息 · 粉丝留言直通商家后台</div>
+        </div>
+      </div>
+
+      <!-- 顶部快捷触发公众号动作 -->
+      <div class="hidden xl:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 gap-1 text-xs font-bold">
+        <button @click="triggerFollowWelcome" class="px-3 py-1.5 rounded-lg hover:bg-white text-slate-700 transition">👋 关注欢迎语</button>
+        <button @click="handleOaAction('push_news')" class="px-3 py-1.5 rounded-lg hover:bg-white text-slate-700 transition">📰 推送多图文</button>
+        <button @click="pushTemplateMsg('rent')" class="px-3 py-1.5 rounded-lg hover:bg-white text-blue-700 transition">💳 租金提醒</button>
+        <button @click="pushTemplateMsg('maint')" class="px-3 py-1.5 rounded-lg hover:bg-white text-emerald-700 transition">🔧 定保提醒</button>
+      </div>
+
+      <!-- 右侧：各独立端快速入口 -->
+      <div class="flex items-center gap-1.5 md:gap-2">
+        <a href="./index.html" target="_blank"
+           class="bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 px-2.5 md:px-3.5 py-1.5 md:py-2 rounded-xl text-[11px] md:text-xs font-bold transition">
+          🖥️ 消费者官网 &nearr;
+        </a>
+        <a href="./miniprogram.html" target="_blank"
+           class="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 px-2.5 md:px-3.5 py-1.5 md:py-2 rounded-xl text-[11px] md:text-xs font-bold transition">
+          📱 微信小程序 &nearr;
+        </a>
+        <a href="./merchant.html?tab=oa_mgr" target="_blank"
+           class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black px-2.5 md:px-3.5 py-1.5 md:py-2 rounded-xl text-[11px] md:text-xs shadow transition">
+          ⚙️ 商家后台 &nearr;
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== 2. 中间可滑动主内容区：微信公众号高保真交互系统 ==================== -->
+  <main class="app-scrollable-main py-6 px-4 pb-16">
+    <div class="max-w-7xl mx-auto page-view-anim">
+      <div class="grid lg:grid-cols-12 gap-8 items-start">
+
+        <!-- 左侧：微信公众号手机仿真器 -->
+        <div class="lg:col-span-5 flex justify-center">
+          <div class="phone-mockup relative">
+            <div class="phone-notch"></div>
+
+            <!-- 微信公众号顶部导航栏 -->
+            <div class="bg-slate-100 border-b border-slate-300 pt-8 pb-2.5 px-4 flex items-center justify-between text-slate-900 shrink-0">
+              <button @click="activeArticle = null" class="text-xs font-bold flex items-center gap-1">
+                <span>&larr;</span><span>{{ activeArticle ? '返回会话' : '微信' }}</span>
+              </button>
+              <div class="text-center">
+                <div class="text-xs font-black">{{ state.company.wechatService }}</div>
+                <div class="text-[9px] text-emerald-600 font-bold">✓ 河北元赫汽车官方认证服务号</div>
+              </div>
+              <span class="text-xs font-bold text-slate-600">•••</span>
+            </div>
+
+            <!-- 视图 A：当点开某篇公众号推文时 -> 显示仿真微信公众平台文章阅读器 -->
+            <div v-if="activeArticle" class="phone-scroll bg-white p-4 space-y-3 text-xs">
+              <span class="inline-block bg-blue-50 text-blue-700 font-bold text-[10px] px-2.5 py-0.5 rounded-full">{{ activeArticle.tag }}</span>
+              <h3 class="text-base font-black text-slate-900 leading-snug">{{ activeArticle.title }}</h3>
+              <div class="flex items-center gap-2 text-[10px] text-slate-400">
+                <span class="text-blue-600 font-bold">{{ state.company.name }}</span>
+                <span>{{ activeArticle.date }}</span>
+                <span>发表于河北石家庄</span>
+              </div>
+
+              <div v-if="activeArticle.cover" class="rounded-xl overflow-hidden border border-slate-200">
+                <img :src="activeArticle.cover" class="w-full h-40 object-cover" />
+              </div>
+
+              <div class="text-slate-700 leading-relaxed text-xs space-y-2" v-html="activeArticle.content"></div>
+
+              <!-- 推文内嵌的【微信小程序跳转卡片】 -->
+              <div @click="handleOaAction('goto_mp_cars')"
+                   class="p-3 rounded-2xl bg-gradient-to-r from-blue-50 to-emerald-50 border-2 border-blue-200 cursor-pointer hover:border-blue-400 transition space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-black text-blue-700 flex items-center gap-1">📱 河北元赫汽车服务 · 官方小程序</span>
+                  <span class="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold">点击进入 &rarr;</span>
+                </div>
+                <div class="font-black text-xs text-slate-900">比亚迪秦PLUS EV / 广汽埃安 / 红旗E-QM5 在线选车与试驾预约</div>
+                <div class="text-[10px] text-slate-500">5800万注册资本 · 100万三者险全包 · 点击卡片直接跳转独立小程序端</div>
+              </div>
+
+              <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
+                <span>阅读 {{ activeArticle.views }} · 👍 赞 {{ activeArticle.likes || 328 }}</span>
+                <button @click="copyArticleText(activeArticle)" class="text-blue-600 font-bold">📋 复制推文全文</button>
+              </div>
+              <button @click="activeArticle = null" class="w-full py-2 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs">
+                &larr; 返回公众号会话界面
+              </button>
+            </div>
+
+            <!-- 视图 B：公众号标准会话流（支持自动欢迎语、多图文卡片、服务通知模板消息、营业执照卡、地址导航卡、粉丝对话） -->
+            <div v-else id="oa-scroll-box" class="phone-scroll wechat-chat-bg p-3 space-y-3" @click="oaSubMenu = null">
+              <div v-for="m in oaMessages" :key="m.id" class="space-y-1">
+                <div class="text-center">
+                  <span class="bg-black/10 text-slate-600 text-[9px] px-2 py-0.5 rounded">{{ m.time }}</span>
+                </div>
+
+                <!-- 1. 粉丝自己发送的文本消息 -->
+                <div v-if="m.type === 'user_text'" class="flex justify-end">
+                  <div class="bg-emerald-500 text-slate-950 font-semibold px-3 py-2 rounded-2xl rounded-tr-sm text-xs max-w-[82%] shadow-sm">
+                    {{ m.content }}
+                  </div>
+                </div>
+
+                <!-- 2. 公众号多图文推送卡片（头条大图 + 次条列表） -->
+                <div v-else-if="m.type === 'news_card'" class="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200/90">
+                  <!-- 头条大图 -->
+                  <div @click="activeArticle = state.articles[0]" class="relative h-36 cursor-pointer group">
+                    <img :src="state.articles[0].cover || './assets/cars/qin_plus_front.jpg'" class="w-full h-full object-cover" />
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent p-3 flex flex-col justify-end">
+                      <span class="bg-amber-500 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded w-fit mb-1">{{ state.articles[0].tag }}</span>
+                      <div class="text-white font-black text-xs leading-snug group-hover:underline">{{ state.articles[0].title }}</div>
+                    </div>
+                  </div>
+                  <!-- 次条列表 -->
+                  <div v-for="(art, idx) in state.articles.slice(1)" :key="art.id"
+                       @click="activeArticle = art"
+                       class="p-3 border-t border-slate-100 flex items-center justify-between gap-2.5 cursor-pointer hover:bg-slate-50">
+                    <div class="text-xs font-bold text-slate-800 line-clamp-2 flex-1">{{ art.title }}</div>
+                    <img :src="art.cover || './assets/cars/aion_s_front.jpg'" class="w-12 h-12 rounded-lg object-cover shrink-0 border border-slate-200" />
+                  </div>
+                </div>
+
+                <!-- 3. 微信服务通知【模板消息】卡片 -->
+                <div v-else-if="m.type === 'template'" class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200/90 text-xs space-y-2">
+                  <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <span class="font-black" :class="m.tplColor || 'text-slate-900'">{{ m.tplTitle }}</span>
+                    <span class="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">服务通知</span>
+                  </div>
+                  <div class="space-y-1 text-[11px]">
+                    <div v-for="(f, i) in m.fields" :key="i" class="flex justify-between gap-2">
+                      <span class="text-slate-400 shrink-0">{{ f.k }}：</span>
+                      <span class="font-bold text-slate-800 text-right">{{ f.v }}</span>
+                    </div>
+                  </div>
+                  <div @click="handleOaAction(m.actionCode)"
+                       class="pt-2 border-t border-slate-100 flex items-center justify-between text-blue-600 font-black text-[11px] cursor-pointer hover:underline">
+                    <span>{{ m.actionText }}</span>
+                    <span>&rarr;</span>
+                  </div>
+                </div>
+
+                <!-- 4. 《营业执照（副本）》高清原件卡片 -->
+                <div v-else-if="m.type === 'license_card'" class="bg-white rounded-2xl p-3 shadow-sm border border-amber-300 space-y-2 text-xs">
+                  <div class="font-black text-slate-900">🏛️ 河北元赫汽车 · 5800万注册资本《营业执照》公示</div>
+                  <div class="text-[10px] text-slate-500">统一社会信用代码：{{ state.company.creditCode }} | 法定代表人：{{ state.company.legalRep }}</div>
+                  <img :src="state.company.licenseImgUrl || './assets/business_license.jpg'"
+                       @click="licenseModalOpen = true"
+                       class="w-full h-36 object-contain bg-slate-50 rounded-xl border border-slate-200 cursor-pointer" />
+                  <button @click="licenseModalOpen = true" class="w-full py-1.5 rounded-lg bg-blue-50 text-blue-700 font-bold text-[10px]">
+                    🔍 点击全屏放大查验营业执照原件
+                  </button>
+                </div>
+
+                <!-- 5. 总部地址导航与联系方式名片卡 -->
+                <div v-else-if="m.type === 'location_card'" class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-2 text-xs">
+                  <div class="font-black text-slate-900">📍 河北元赫汽车服务有限公司 · 总部位置</div>
+                  <div class="p-2.5 rounded-xl bg-blue-50/70 border border-blue-100 text-[11px] text-slate-700 space-y-1">
+                    <div><strong>详细地址</strong>：{{ state.company.address }}</div>
+                    <div><strong>联系电话</strong>：<span class="text-blue-600 font-black">{{ state.company.phone }}（杨经理）</span></div>
+                    <div><strong>官方微信</strong>：{{ state.company.wechatId }}</div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-1.5 text-[10px] font-bold">
+                    <button @click="copyText(state.company.address, '总部地址')" class="py-1.5 rounded-lg bg-slate-100 text-slate-700">📋 复制导航地址</button>
+                    <button @click="copyText(state.company.phone, '杨经理电话')" class="py-1.5 rounded-lg bg-blue-600 text-white">📞 复制电话号码</button>
+                  </div>
+                </div>
+
+                <!-- 6. 默认关注欢迎语/文本超链接卡片 -->
+                <div v-else class="bg-white rounded-2xl p-3.5 text-xs shadow-sm space-y-2 border border-slate-200/60">
+                  <div class="font-black text-slate-900">{{ m.title }}</div>
+                  <div v-if="m.content" class="text-slate-600 whitespace-pre-line text-[11px] leading-relaxed">{{ m.content }}</div>
+                  <div v-if="m.links" class="pt-2 border-t border-slate-100 space-y-1.5">
+                    <div v-for="(lk, i) in m.links" :key="i" @click="handleOaAction(lk.action)"
+                         class="text-blue-600 font-bold text-[11px] cursor-pointer hover:underline flex items-center justify-between">
+                      <span>{{ lk.label }}</span><span>&rarr;</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 微信公众号底部：自定义菜单栏（含键盘切换 + 3个一级菜单 + 弹出式二级子菜单） -->
+            <div v-if="!activeArticle" class="bg-slate-50 border-t border-slate-300 h-12 flex items-center relative shrink-0 select-none">
+              <button @click="oaInputMode = !oaInputMode; oaSubMenu = null"
+                      class="w-11 h-full border-r border-slate-300 flex items-center justify-center text-slate-600 hover:bg-slate-200 text-sm">
+                {{ oaInputMode ? '☰' : '⌨️' }}
+              </button>
+
+              <!-- 模式 A：粉丝直接打字发消息给公众号（同步至商家后台） -->
+              <div v-if="oaInputMode" class="flex-1 flex items-center gap-1.5 px-2">
+                <input v-model="oaUserInput" @keyup.enter="sendOaUserMsg()"
+                       placeholder="给公众号发消息（直传商家后台）..."
+                       class="flex-1 bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs outline-none" />
+                <button @click="sendOaUserMsg()" class="bg-emerald-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs">发送</button>
+              </div>
+
+              <!-- 模式 B：标准微信服务号 3 栏底部自定义菜单（带弹出式二级子菜单） -->
+              <div v-else class="flex-1 grid grid-cols-3 divide-x divide-slate-300 h-full text-[11px] font-bold text-slate-800">
+                <!-- 一级菜单 1：🚗 租车买车 -->
+                <div class="relative h-full">
+                  <button @click.stop="oaSubMenu = oaSubMenu === 'menu1' ? null : 'menu1'"
+                          class="w-full h-full flex items-center justify-center gap-1 hover:bg-slate-100">
+                    <span class="text-[9px] text-slate-400">▲</span><span>🚗 租车买车</span>
+                  </button>
+                  <div v-if="oaSubMenu === 'menu1'"
+                       class="absolute bottom-13 left-1 right-1 bg-white rounded-xl shadow-2xl border border-slate-200 divide-y divide-slate-100 text-[11px] z-30 overflow-hidden">
+                    <button @click="handleOaAction('goto_mp_cars')" class="w-full py-2.5 px-2 hover:bg-blue-50 text-blue-600 font-black">📱 比亚迪/埃安/红旗</button>
+                    <button @click="handleOaAction('goto_web_calc')" class="w-full py-2.5 px-2 hover:bg-slate-50">🧮 跑网约车月收益测算</button>
+                    <button @click="handleOaAction('push_news')" class="w-full py-2.5 px-2 hover:bg-slate-50">📰 最新车型与招募头条</button>
+                  </div>
+                </div>
+
+                <!-- 一级菜单 2：👨‍✈️ 司机服务 -->
+                <div class="relative h-full">
+                  <button @click.stop="oaSubMenu = oaSubMenu === 'menu2' ? null : 'menu2'"
+                          class="w-full h-full flex items-center justify-center gap-1 hover:bg-slate-100">
+                    <span class="text-[9px] text-slate-400">▲</span><span>👨‍✈️ 司机服务</span>
+                  </button>
+                  <div v-if="oaSubMenu === 'menu2'"
+                       class="absolute bottom-13 left-1 right-1 bg-white rounded-xl shadow-2xl border border-slate-200 divide-y divide-slate-100 text-[11px] z-30 overflow-hidden">
+                    <button @click="handleOaAction('goto_mp_mine')" class="w-full py-2.5 px-2 hover:bg-blue-50 text-emerald-600 font-black">📝 司机加盟在线报名</button>
+                    <button @click="handleOaAction('push_contract')" class="w-full py-2.5 px-2 hover:bg-slate-50">📜 阳光合同与定保标准</button>
+                    <button @click="handleOaAction('goto_mp_service')" class="w-full py-2.5 px-2 hover:bg-slate-50">⚡ 特惠充电与免费保养</button>
+                  </div>
+                </div>
+
+                <!-- 一级菜单 3：🛡️ 关于元赫 -->
+                <div class="relative h-full">
+                  <button @click.stop="oaSubMenu = oaSubMenu === 'menu3' ? null : 'menu3'"
+                          class="w-full h-full flex items-center justify-center gap-1 hover:bg-slate-100">
+                    <span class="text-[9px] text-slate-400">▲</span><span>🛡️ 关于元赫</span>
+                  </button>
+                  <div v-if="oaSubMenu === 'menu3'"
+                       class="absolute bottom-13 left-1 right-1 bg-white rounded-xl shadow-2xl border border-slate-200 divide-y divide-slate-100 text-[11px] z-30 overflow-hidden">
+                    <button @click="handleOaAction('push_license')" class="w-full py-2.5 px-2 hover:bg-amber-50 text-amber-700 font-black">🏛️ 5800万营业执照原件</button>
+                    <button @click="handleOaAction('push_location')" class="w-full py-2.5 px-2 hover:bg-slate-50">📍 高营大街总部导航</button>
+                    <button @click="oaInputMode = true; oaSubMenu = null" class="w-full py-2.5 px-2 hover:bg-slate-50 text-blue-600">💬 给公众号发消息</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧：微信公众号运营控制台 & 多图文推文管理 -->
+        <div class="lg:col-span-7 space-y-5">
+          <div class="soft-section-card rounded-3xl p-6 md:p-8 space-y-5">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="bg-teal-600 text-white text-xs font-black px-3 py-1 rounded-full">微信公众号独立端 · 河北元赫汽车服务</span>
+              <span class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full">支持公众号 $\to$ 独立小程序端无缝跳转</span>
+            </div>
+            <h2 class="text-2xl font-black text-slate-900">💬【河北元赫汽车服务】微信公众号 · 私域获客与司管通知中枢</h2>
+            <p class="text-xs md:text-sm text-slate-600 leading-relaxed">
+              公众号已与消费者官网完全分离独立运行，承担<strong>“品牌信任背书 + 爆款推文获客 + 在租司机账单/保养服务通知 + 一键唤起独立小程序”</strong>四大核心职能。点击下方按钮即可在左侧手机内实时模拟各类公众号推送：
+            </p>
+
+            <!-- 一键模拟公众号消息推送面板 -->
+            <div class="grid sm:grid-cols-3 gap-3 text-xs">
+              <button @click="triggerFollowWelcome" class="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-blue-400 text-left shadow-sm transition">
+                <div class="font-black text-slate-900">👋 1. 模拟新粉丝关注欢迎语</div>
+                <div class="text-[11px] text-slate-500 mt-1">自动发送5800万资质背书+新人300元租车券+小程序入口</div>
+              </button>
+              <button @click="handleOaAction('push_news')" class="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-blue-400 text-left shadow-sm transition">
+                <div class="font-black text-slate-900">📰 2. 推送多图文招募头条</div>
+                <div class="text-[11px] text-slate-500 mt-1">1条大图头条 + 2条次条，点击文章可打开内嵌小程序卡片</div>
+              </button>
+              <button @click="handleOaAction('push_license')" class="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-amber-400 text-left shadow-sm transition">
+                <div class="font-black text-amber-800">🏛️ 3. 推送《营业执照》原件卡</div>
+                <div class="text-[11px] text-slate-500 mt-1">向咨询客户直接展示91130102MA08WQXD6B执照实拍</div>
+              </button>
+              <button @click="pushTemplateMsg('rent')" class="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-blue-400 text-left shadow-sm transition">
+                <div class="font-black text-blue-700">💳 4. 推送【租金到期账单提醒】</div>
+                <div class="text-[11px] text-slate-500 mt-1">展示本月已跑里程(6820/10000km)，点击直接跳小程序交租</div>
+              </button>
+              <button @click="pushTemplateMsg('maint')" class="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-emerald-400 text-left shadow-sm transition">
+                <div class="font-black text-emerald-700">🔧 5. 推送【免费定期保养提醒】</div>
+                <div class="text-[11px] text-slate-500 mt-1">按合同附件1提醒秦EV/红旗司机到店免费定保，点击跳小程序预约</div>
+              </button>
+              <button @click="pushTemplateMsg('book')" class="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-teal-400 text-left shadow-sm transition">
+                <div class="font-black text-teal-700">🚗 6. 推送【预约试驾确认通知】</div>
+                <div class="text-[11px] text-slate-500 mt-1">发送长安区高营大街30号总部地址与杨经理17503114319电话</div>
+              </button>
+            </div>
+
+            <!-- 公众号三大推文速览与一键阅读 -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 space-y-3">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <span class="font-black text-sm text-slate-900">📑 当前公众号 3 篇高转化推文（可在商家后台【💬公众号管理】随时修改）：</span>
+                <a href="./merchant.html?tab=oa_mgr" target="_blank" class="text-xs font-black text-teal-700 hover:underline">✏️ 去后台编辑推文 &nearr;</a>
+              </div>
+              <div class="space-y-2.5 text-xs">
+                <div v-for="(art, i) in state.articles" :key="art.id"
+                     class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded mr-1.5">{{ art.tag }}</span>
+                    <strong class="text-slate-900">{{ art.title }}</strong>
+                  </div>
+                  <div class="flex gap-2 shrink-0">
+                    <button @click="activeArticle = art" class="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold text-[11px]">📱 在手机内阅读</button>
+                    <button @click="copyArticleText(art)" class="px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 font-bold text-[11px]">📋 复制全文</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ==================== 3. 底部固定栏 ==================== -->
+  <footer class="app-fixed-footer px-4 md:px-6 py-2.5 bg-white text-[11px] md:text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
+      <span>💬 河北元赫汽车服务有限公司 · 微信公众号独立端（认证服务号：{{ state.company.wechatService }}）</span>
+      <div class="flex items-center gap-3 font-bold">
+        <a href="./index.html" target="_blank" class="text-blue-600 hover:underline">🖥️ 消费者官网</a>
+        <a href="./miniprogram.html" target="_blank" class="text-emerald-600 hover:underline">📱 微信小程序</a>
+        <a href="./merchant.html?tab=oa_mgr" target="_blank" class="text-amber-700 hover:underline">⚙️ 商家管理后台</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==================== 营业执照高清大图查验弹窗 ==================== -->
+  <div v-if="licenseModalOpen" class="fixed inset-0 z-50 bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-4" @click.self="licenseModalOpen = false">
+    <div class="bg-white rounded-3xl max-w-4xl w-full p-5 shadow-2xl space-y-3">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div>
+          <span class="text-xs font-black text-blue-600">统一社会信用代码：{{ state.company.creditCode }}</span>
+          <h3 class="text-base md:text-lg font-black text-slate-900">河北元赫汽车服务有限公司 · 营业执照（副本）原件公示</h3>
+        </div>
+        <button @click="licenseModalOpen = false" class="px-3 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">关闭 ✕</button>
+      </div>
+      <div class="max-h-[75vh] overflow-auto rounded-2xl border border-slate-200 bg-slate-50 p-2 flex justify-center">
+        <img :src="state.company.licenseImgUrl || './assets/business_license.jpg'" alt="营业执照高清原件" class="max-w-full h-auto rounded-xl" />
+      </div>
+    </div>
+  </div>
+
+</div>
+<script src="./js/data.js"></script>
+<script src="./js/app.js"></script>
+</body>
+</html>
