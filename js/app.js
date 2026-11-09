@@ -1,18 +1,18 @@
 // 河北元赫汽车服务有限公司 - 全域数字化系统 v3.0 (消费者官网 index.html + 商家后台 merchant.html 双端同步引擎)
 const { createApp, ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } = Vue;
 
-const STORAGE_KEY = "yuanhe_digital_system_v3_1";
-const syncChannel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel("yuanhe_sync_v3_1") : null;
+const STORAGE_KEY = "yuanhe_digital_system_v3_2";
+const syncChannel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel("yuanhe_sync_v3_2") : null;
 
 createApp({
   setup() {
-    // 1. 初始化加载数据（优先本地缓存/服务端同步，保证版本v3.1结构完整）
+    // 1. 初始化加载数据（优先本地缓存/服务端同步，保证版本v3.2结构完整）
     const loadInitialState = () => {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (parsed && parsed.version === "3.1" && Array.isArray(parsed.vehicles)) {
+          if (parsed && parsed.version === "3.2" && Array.isArray(parsed.vehicles)) {
             return parsed;
           }
         }
@@ -647,7 +647,7 @@ createApp({
       const txt = (
         quickMsg ||
         ld.replyDraft ||
-        `【河北元赫汽车通知】${ld.name}您好！您的【${ld.targetCar}】预约申请已审核通过，请携带身份证与驾驶证前往石家庄市长安区高营大街30号御景半岛花园2号楼1824看车试驾，杨经理电话：17503114319`
+        `【河北元赫汽车通知】${ld.name}您好！您的【${ld.targetCar}】预约申请已审核通过，请携带身份证与驾驶证前往石家庄市长安区高营大街30号御景半岛花园2号楼1824看车试驾，杨经理电话：19930606427`
       ).trim();
       ld.merchantReply = `${nowTimeStr()} 已回复：${txt}`;
       ld.status = "已邀约到店";
@@ -822,7 +822,7 @@ createApp({
           time: nowTimeStr(),
           title: "📜《河北元赫汽车·车辆租赁协议》六大阳光保障：",
           content:
-            "1️⃣ 高额营运险全包：交强险、车损险、不计免赔、100万三者险、50万/座座位险全部由元赫承担；\n2️⃣ 正常保养年审全包：秦EV(5000/20000km)、红旗(20000km)、荣威MAX(3000/10000km)免费定保；\n3️⃣ 24h免费救援：石家庄市区内故障/事故24小时免费救援（17503114319）；\n4️⃣ 替代车兜底：年检/保养等非司机原因无法用车，次日起免费提供同等级替代车或免除期间租金；\n5️⃣ 充足里程：月限10,000公里/月（超里程仅0.3元/km）；\n6️⃣ 押金无忧退：期满收回车辆15个工作日内无违章一次性无息退还押金！",
+            "1️⃣ 高额营运险全包：交强险、车损险、不计免赔、100万三者险、50万/座座位险全部由元赫承担；\n2️⃣ 正常保养年审全包：秦EV(5000/20000km)、红旗(20000km)、荣威MAX(3000/10000km)免费定保；\n3️⃣ 24h免费救援：石家庄市区内故障/事故24小时免费救援（19930606427）；\n4️⃣ 替代车兜底：年检/保养等非司机原因无法用车，次日起免费提供同等级替代车或免除期间租金；\n5️⃣ 充足里程：月限10,000公里/月（超里程仅0.3元/km）；\n6️⃣ 押金无忧退：期满收回车辆15个工作日内无违章一次性无息退还押金！",
           links: [{ label: "👉 前往小程序在线签约/报名试驾", action: "goto_mp_mine" }]
         });
         scrollOaBottom();
@@ -1223,7 +1223,7 @@ createApp({
         fetch("./api/data")
           .then((r) => (r.ok ? r.json() : Promise.reject()))
           .then((d) => {
-            if (d && d.version === "3.1") applyRemoteLeadsAndChat(d);
+            if (d && d.version === "3.2") applyRemoteLeadsAndChat(d);
           })
           .catch(() => {
             // 当处于 24 小时云端永久网址 (GitHub Pages) 时，直接从云端数据库拉取最新线索与对话
@@ -1242,7 +1242,7 @@ createApp({
       fetch("./api/data")
         .then((r) => (r.ok ? r.json() : Promise.reject()))
         .then((d) => {
-          if (d && d.version === "3.1" && Array.isArray(d.vehicles)) {
+          if (d && d.version === "3.2" && Array.isArray(d.vehicles)) {
             isRemoteUpdating = true;
             Object.assign(state, d);
             if (!Array.isArray(state.chatMessages) || state.chatMessages.length === 0) {
@@ -1275,7 +1275,7 @@ createApp({
         syncChannel.onmessage = (ev) => {
           try {
             const parsed = JSON.parse(ev.data);
-            if (parsed && parsed.version === "3.1") {
+            if (parsed && parsed.version === "3.2") {
               isRemoteUpdating = true;
               Object.assign(state, parsed);
               nextTick(() => {
@@ -1290,7 +1290,7 @@ createApp({
         if (ev.key === STORAGE_KEY && ev.newValue) {
           try {
             const parsed = JSON.parse(ev.newValue);
-            if (parsed && parsed.version === "3.1") {
+            if (parsed && parsed.version === "3.2") {
               isRemoteUpdating = true;
               Object.assign(state, parsed);
               nextTick(() => {
